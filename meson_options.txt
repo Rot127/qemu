@@ -349,6 +349,9 @@ option('gprof', type: 'boolean', value: false,
        deprecated: true)
 option('slirp_smbd', type : 'feature', value : 'auto',
        description: 'use smbd (at path --smbd=*) in slirp networking')
-
 option('hexagon_idef_parser', type : 'boolean', value : true,
        description: 'use idef-parser to automatically generate TCG code for the Hexagon frontend')
+option('tracewrap', type : 'boolean', value : false,
+       description: 'tracewrap (bap-frames) compression support')
+option('tracewrap_dir', type : 'string', value : '',
+       description: 'path to bap-frames')
