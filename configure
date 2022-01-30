@@ -202,6 +202,16 @@ EXTRA_LDFLAGS=""
 # is impossible without a --enable-foo that exits if a feature is not found.
 default_feature=""
 
+# 3. Automatically enable/disable other options
+tcg="enabled"
+cfi="false"
+
+# 4. Detection partly done in configure
+xen=${default_feature:+disabled}
+
+tracewrap="false"
+
+# parse CC options second
 for opt do
   optarg=$(expr "x$opt" : 'x[^=]*=\(.*\)')
   case "$opt" in
@@ -727,6 +737,10 @@ for opt do
   --with-default-devices) meson_option_add -Ddefault_devices=true
   ;;
   --without-default-devices) meson_option_add -Ddefault_devices=false
+  ;;
+  --with-tracewrap=*)
+    tracewrap="true"
+    tracewrap_dir="$optarg"
   ;;
   --with-devices-*[!a-zA-Z0-9_-]*=*) error_exit "Passed bad --with-devices-FOO option"
   ;;
@@ -1937,6 +1951,8 @@ if test "$skip_meson" = no; then
   test "$qemu_suffix" != qemu && meson_option_add "-Dqemu_suffix=$qemu_suffix"
   test "$smbd" != '' && meson_option_add "-Dsmbd=$smbd"
   test "$tcg" != enabled && meson_option_add "-Dtcg=$tcg"
+  test "$tracewrap" != '' && meson_option_add "-Dtracewrap=$tracewrap"
+  test "$tracewrap_dir" != '' && meson_option_add "-Dtracewrap_dir=$tracewrap_dir"
   run_meson() {
     NINJA=$ninja $meson setup --prefix "$prefix" "$@" $cross_arg "$PWD" "$source_path"
   }

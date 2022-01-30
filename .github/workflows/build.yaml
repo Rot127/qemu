@@ -1,0 +1,41 @@
+name: Build target user
+
+on: [pull_request, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.x
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+    - name: Copy source.list file to include deb-src
+      run: |
+        sudo cp /etc/apt/sources.list /etc/apt/sources.list.d/tmp.list
+        sudo sed -i "s/# deb-src/deb-src/g" /etc/apt/sources.list.d/tmp.list
+    - name: Install deps
+      run: |
+        sudo apt-get  update
+        sudo apt-get --no-install-recommends -y build-dep qemu
+        sudo apt-get install -y autoconf libtool protobuf-c-compiler
+        pip3 install --user ninja
+    - name: Install OCaml
+      uses: ocaml/setup-ocaml@v2
+      with:
+        ocaml-compiler: 4.14.x
+        dune-cache: true
+        opam-disable-sandboxing: true
+    - name: Install piqi
+      run: |
+        opam install piqi
+    - name: Clone qemu and bap-frames
+      run: |
+        git clone --depth 1 http://github.com/BinaryAnalysisPlatform/bap-frames.git
+        git clone --depth 1 http://github.com/BinaryAnalysisPlatform/qemu.git
+    - name: Build without tracewrap
+      run: |
+        cd qemu
+        ./configure --prefix=$HOME --target-list=arm-linux-user
+        ninja -C build
