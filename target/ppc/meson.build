@@ -6,6 +6,7 @@ ppc_ss.add(files(
   'excp_helper.c',
   'gdbstub.c',
   'helper_regs.c',
+  'bap-traces/bap_trace_helper.c',
 ))
 
 ppc_ss.add(when: 'CONFIG_TCG', if_true: files(

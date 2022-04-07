@@ -40,6 +40,8 @@
 #include "qemu/qemu-print.h"
 #include "qapi/error.h"
 
+#include "bap-traces/bap_trace_helper.h"
+
 #define CPU_SINGLE_STEP 0x1
 #define CPU_BRANCH_STEP 0x2
 
@@ -8501,6 +8503,10 @@ static void ppc_tr_translate_insn(DisasContextBase *dcbase, CPUState *cs)
     insn = translator_ldl_swap(env, dcbase, pc, need_byteswap(ctx));
     ctx->base.pc_next = pc += 4;
 
+#ifdef HAS_TRACEWRAP
+    ppc_bap_trace_newframe(ctx->cia);
+#endif
+
     if (!is_prefix_insn(ctx, insn)) {
         ok = (decode_insn32(ctx, insn) ||
               decode_legacy(cpu, ctx, insn));
@@ -8521,6 +8527,10 @@ static void ppc_tr_translate_insn(DisasContextBase *dcbase, CPUState *cs)
     if (!ok) {
         gen_invalid(ctx);
     }
+
+#ifdef HAS_TRACEWRAP
+    ppc_bap_trace_endframe(env, ctx->cia);
+#endif
 
     /* End the TB when crossing a page boundary. */
     if (ctx->base.is_jmp == DISAS_NEXT && !(pc & ~TARGET_PAGE_MASK)) {
