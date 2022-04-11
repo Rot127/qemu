@@ -41,6 +41,7 @@
 #include "qapi/error.h"
 
 #include "bap-traces/bap_trace_helper.h"
+#include "tcg/tcg.h"
 
 #define CPU_SINGLE_STEP 0x1
 #define CPU_BRANCH_STEP 0x2
@@ -8486,6 +8487,24 @@ static bool is_prefix_insn(DisasContext *ctx, uint32_t insn)
     return opc1(insn) == 1;
 }
 
+#ifdef HAS_TRACEWRAP
+static inline void gen_trace_newframe(uint32_t pc)
+{
+    TCGv_i32 tmp0 = tcg_temp_new_i32();
+    tcg_gen_movi_i32(tmp0, pc);
+    gen_helper_trace_newframe(tmp0);
+    tcg_temp_free_i32(tmp0);
+}
+
+static inline void gen_trace_endframe(uint32_t pc)
+{
+    TCGv_i32 tmp0 = tcg_temp_new_i32();
+    tcg_gen_movi_i32(tmp0, pc);
+    gen_helper_trace_endframe(cpu_env, tmp0);
+    tcg_temp_free_i32(tmp0);
+}
+#endif /* HAS_TRACEWRAP */
+
 static void ppc_tr_translate_insn(DisasContextBase *dcbase, CPUState *cs)
 {
     DisasContext *ctx = container_of(dcbase, DisasContext, base);
@@ -8504,7 +8523,7 @@ static void ppc_tr_translate_insn(DisasContextBase *dcbase, CPUState *cs)
     ctx->base.pc_next = pc += 4;
 
 #ifdef HAS_TRACEWRAP
-    ppc_bap_trace_newframe(ctx->cia);
+    gen_trace_newframe(ctx->cia);
 #endif
 
     if (!is_prefix_insn(ctx, insn)) {
@@ -8529,7 +8548,7 @@ static void ppc_tr_translate_insn(DisasContextBase *dcbase, CPUState *cs)
     }
 
 #ifdef HAS_TRACEWRAP
-    ppc_bap_trace_endframe(env, ctx->cia);
+    gen_trace_endframe(ctx->cia);
 #endif
 
     /* End the TB when crossing a page boundary. */
