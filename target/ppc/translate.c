@@ -1681,21 +1681,27 @@ static inline void gen_op_arith_add(DisasContext *ctx, TCGv ret, TCGv arg1,
 #define GEN_INT_ARITH_ADD(name, opc3, ca, add_ca, compute_ca, compute_ov)     \
 static void glue(gen_, name)(DisasContext *ctx)                               \
 {                                                                             \
+    gen_helper_trace_load_reg(cpu_reg_names[rA(ctx->opcode)], cpu_reg[rA(ctx->opcode)]); \
+    gen_helper_trace_load_reg(cpu_reg_names[rB(ctx->opcode)], cpu_reg[rB(ctx->opcode)]);\
     gen_op_arith_add(ctx, cpu_gpr[rD(ctx->opcode)],                           \
                      cpu_gpr[rA(ctx->opcode)], cpu_gpr[rB(ctx->opcode)],      \
                      ca, glue(ca, 32),                                        \
                      add_ca, compute_ca, compute_ov, Rc(ctx->opcode));        \
+    gen_helper_trace_store_reg(cpu_reg_names[rD(ctx->opcode)], cpu_reg[rD(ctx->opcode)]);\
 }
 /* Add functions with one operand and one immediate */
 #define GEN_INT_ARITH_ADD_CONST(name, opc3, const_val, ca,                    \
                                 add_ca, compute_ca, compute_ov)               \
 static void glue(gen_, name)(DisasContext *ctx)                               \
 {                                                                             \
+    gen_helper_trace_load_reg(cpu_reg_names[rA(ctx->opcode)], cpu_reg[rA(ctx->opcode)]); \
+    // Currently ignores immediate.
     TCGv t0 = tcg_const_tl(const_val);                                        \
     gen_op_arith_add(ctx, cpu_gpr[rD(ctx->opcode)],                           \
                      cpu_gpr[rA(ctx->opcode)], t0,                            \
                      ca, glue(ca, 32),                                        \
                      add_ca, compute_ca, compute_ov, Rc(ctx->opcode));        \
+    gen_helper_trace_store_reg(cpu_reg_names[rD(ctx->opcode)], cpu_reg[rD(ctx->opcode)]);\
     tcg_temp_free(t0);                                                        \
 }
 
@@ -8502,6 +8508,20 @@ static inline void gen_trace_endframe(uint32_t pc)
     tcg_gen_movi_i32(tmp0, pc);
     gen_helper_trace_endframe(cpu_env, tmp0);
     tcg_temp_free_i32(tmp0);
+}
+
+static void gen_trace_load_reg(int reg, TCGv_i64 var)
+{
+    TCGv_i32 t = tcg_const_i32(reg);
+    gen_helper_trace_load_reg(t, var);
+    tcg_temp_free_i32(t);
+}
+
+static void gen_trace_store_reg(int reg, TCGv_i64 var)
+{
+    TCGv_i32 t = tcg_const_i32(reg);
+    gen_helper_trace_store_reg(t, var);
+    tcg_temp_free_i32(t);
 }
 #endif /* HAS_TRACEWRAP */
 
