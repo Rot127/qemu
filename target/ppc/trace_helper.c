@@ -1,8 +1,48 @@
 #include "tracewrap.h"
-#include "exec/helper-head.h"
-#include "tcg/tcg-op.h"
+#include "exec/helper-proto.h"
 
-#include "bap_trace_helper.h"
+#include "trace_helper.h"
+
+
+/*
+ * QEMUs helper.
+ */
+
+void HELPER(trace_newframe)(uint32_t pc)
+{
+    qemu_trace_newframe(pc, 0);
+}
+
+void HELPER(trace_endframe)(CPUPPCState *state, uint32_t pc)
+{
+    qemu_trace_endframe(state, pc, PPC_INSN_SIZE);
+}
+
+void HELPER(trace_load_reg)(uint32_t reg, uint32_t val)
+{
+    OperandInfo *oi = load_store_reg(reg, val, 0);
+    qemu_trace_add_operand(oi, 0x1);
+}
+
+void HELPER(trace_store_reg)(uint32_t reg, uint32_t val)
+{
+    OperandInfo *oi = load_store_reg(reg, val, 1);
+    qemu_trace_add_operand(oi, 0x2);
+}
+
+#ifdef TARGET_PPC64
+void HELPER(trace_load_reg64)(uint32_t reg, uint64_t val)
+{
+    OperandInfo *oi = load_store_reg64(reg, val, 0);
+    qemu_trace_add_operand(oi, 0x1);
+}
+
+void HELPER(trace_store_reg64)(uint32_t reg, uint64_t val)
+{
+    OperandInfo *oi = load_store_reg64(reg, val, 1);
+    qemu_trace_add_operand(oi, 0x2);
+}
+#endif
 
 /*
  * Build frames
@@ -60,27 +100,13 @@ OperandInfo *load_store_reg(uint32_t reg, uint32_t val, int ls) {
 }
 
 /*
- * QEMUs helper.
+ * BAP trace predefined functions.
+ *
+ * These functions are predefined in BAPs tracewrap.h and need to be implemented by us.
  */
 
-void HELPER(trace_newframe)(uint32_t pc)
-{
-    qemu_trace_newframe(pc, 0);
-}
-
-void HELPER(trace_endframe)(CPUPPCState *state, uint32_t pc)
-{
-    qemu_trace_endframe(state, pc, PPC_INSN_SIZE);
-}
-
-void HELPER(trace_load_reg)(uint32_t reg, uint64_t val)
-{
-    OperandInfo *oi = load_store_reg(reg, val, 0);
-    qemu_trace_add_operand(oi, 0x1);
-}
-
-void HELPER(trace_store_reg)(uint32_t reg, uint64_t val)
-{
-    OperandInfo *oi = load_store_reg(reg, val, 1);
-    qemu_trace_add_operand(oi, 0x2);
+OperandInfo *load_store_reg64(uint32_t reg, uint64_t val, int ls) {
+    // Incorrect test implementation. Assumes reg is a rX gpr register number.
+    const char *name = ppc_reg_names[reg];
+    return build_load_store_reg_op(name, ls, &val, sizeof(val));
 }

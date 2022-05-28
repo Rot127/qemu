@@ -778,6 +778,10 @@ DEF_HELPER_5(stqcx_be_parallel, i32, env, tl, i64, i64, i32)
 #ifdef HAS_TRACEWRAP
 DEF_HELPER_1(trace_newframe, void, i32)
 DEF_HELPER_2(trace_endframe, void, env, i32)
-DEF_HELPER_2(trace_load_reg, void, i32, i64)
-DEF_HELPER_2(trace_store_reg, void, i32, i64)
+DEF_HELPER_2(trace_load_reg, void, i32, i32)
+DEF_HELPER_2(trace_store_reg, void, i32, i32)
+#ifdef TARGET_PPC64
+DEF_HELPER_2(trace_load_reg64, void, i32, i64)
+DEF_HELPER_2(trace_store_reg64, void, i32, i64)
+#endif
 #endif /* HAS_TRACEWRAP */

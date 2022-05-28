@@ -1,8 +1,7 @@
-#ifndef BAP_TRACE_HELPER
-#define BAP_TRACE_HELPER
+#ifndef TRACE_HELPER
+#define TRACE_HELPER
 
 #include "qemu/osdep.h"
-#include "cpu.h"
 
 #define PPC_INSN_SIZE 4
 
@@ -29,4 +28,4 @@ const char *ppc_reg_names[] = {
     NULL
 };
 
-#endif /* BAP_TRACE_HELPER */
+#endif /* TRACE_HELPER */

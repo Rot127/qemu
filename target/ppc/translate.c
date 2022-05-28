@@ -40,7 +40,6 @@
 #include "qemu/qemu-print.h"
 #include "qapi/error.h"
 
-#include "bap-traces/bap_trace_helper.h"
 #include "tcg/tcg.h"
 
 #define CPU_SINGLE_STEP 0x1
@@ -78,6 +77,46 @@ static TCGv cpu_fpscr;
 static TCGv_i32 cpu_access_type;
 
 #include "exec/gen-icount.h"
+
+#ifdef HAS_TRACEWRAP
+static inline void gen_trace_newframe(uint32_t pc)
+{
+    TCGv_i32 tmp0 = tcg_temp_new_i32();
+    tcg_gen_movi_i32(tmp0, pc);
+    gen_helper_trace_newframe(tmp0);
+    tcg_temp_free_i32(tmp0);
+}
+
+static inline void gen_trace_endframe(uint32_t pc)
+{
+    TCGv_i32 tmp0 = tcg_temp_new_i32();
+    tcg_gen_movi_i32(tmp0, pc);
+    gen_helper_trace_endframe(cpu_env, tmp0);
+    tcg_temp_free_i32(tmp0);
+}
+
+static void gen_trace_load_reg(int reg, TCGv var)
+{
+    TCGv_i32 t = tcg_const_i32(reg);
+    #ifdef TARGET_PPC64
+    gen_helper_trace_load_reg64(t, var);
+    #else
+    gen_helper_trace_load_reg(t, var);
+    #endif
+    tcg_temp_free_i32(t);
+}
+
+static void gen_trace_store_reg(int reg, TCGv var)
+{
+    TCGv_i32 t = tcg_const_i32(reg);
+    #ifdef TARGET_PPC64
+    gen_helper_trace_store_reg64(t, var);
+    #else
+    gen_helper_trace_store_reg(t, var);
+    #endif
+    tcg_temp_free_i32(t);
+}
+#endif /* HAS_TRACEWRAP */
 
 void ppc_translate_init(void)
 {
@@ -1677,31 +1716,43 @@ static inline void gen_op_arith_add(DisasContext *ctx, TCGv ret, TCGv arg1,
         tcg_temp_free(t0);
     }
 }
+
+static inline void log_load_rx(uint32_t rx) {
+    #ifdef HAS_TRACEWRAP
+    gen_trace_load_reg(cpu_reg_names[rx], cpu_gpr[rx]);
+    #endif
+}
+
+static inline void log_store_rx(uint32_t rx) {
+    #ifdef HAS_TRACEWRAP
+    gen_trace_store_reg(cpu_reg_names[rx], cpu_gpr[rx]);
+    #endif
+}
+
 /* Add functions with two operands */
 #define GEN_INT_ARITH_ADD(name, opc3, ca, add_ca, compute_ca, compute_ov)     \
 static void glue(gen_, name)(DisasContext *ctx)                               \
 {                                                                             \
-    gen_helper_trace_load_reg(cpu_reg_names[rA(ctx->opcode)], cpu_reg[rA(ctx->opcode)]); \
-    gen_helper_trace_load_reg(cpu_reg_names[rB(ctx->opcode)], cpu_reg[rB(ctx->opcode)]);\
+    log_load_rx(rA(ctx->opcode));                                             \
+    log_load_rx(rB(ctx->opcode));                                             \
     gen_op_arith_add(ctx, cpu_gpr[rD(ctx->opcode)],                           \
                      cpu_gpr[rA(ctx->opcode)], cpu_gpr[rB(ctx->opcode)],      \
                      ca, glue(ca, 32),                                        \
                      add_ca, compute_ca, compute_ov, Rc(ctx->opcode));        \
-    gen_helper_trace_store_reg(cpu_reg_names[rD(ctx->opcode)], cpu_reg[rD(ctx->opcode)]);\
+    log_store_rx(rD(ctx->opcode));                                            \
 }
 /* Add functions with one operand and one immediate */
 #define GEN_INT_ARITH_ADD_CONST(name, opc3, const_val, ca,                    \
                                 add_ca, compute_ca, compute_ov)               \
 static void glue(gen_, name)(DisasContext *ctx)                               \
 {                                                                             \
-    gen_helper_trace_load_reg(cpu_reg_names[rA(ctx->opcode)], cpu_reg[rA(ctx->opcode)]); \
-    // Currently ignores immediate.
+    log_load_rx(rA(ctx->opcode));                                             \
     TCGv t0 = tcg_const_tl(const_val);                                        \
     gen_op_arith_add(ctx, cpu_gpr[rD(ctx->opcode)],                           \
                      cpu_gpr[rA(ctx->opcode)], t0,                            \
                      ca, glue(ca, 32),                                        \
                      add_ca, compute_ca, compute_ov, Rc(ctx->opcode));        \
-    gen_helper_trace_store_reg(cpu_reg_names[rD(ctx->opcode)], cpu_reg[rD(ctx->opcode)]);\
+    log_store_rx(rD(ctx->opcode));                                            \
     tcg_temp_free(t0);                                                        \
 }
 
@@ -8493,38 +8544,6 @@ static bool is_prefix_insn(DisasContext *ctx, uint32_t insn)
     return opc1(insn) == 1;
 }
 
-#ifdef HAS_TRACEWRAP
-static inline void gen_trace_newframe(uint32_t pc)
-{
-    TCGv_i32 tmp0 = tcg_temp_new_i32();
-    tcg_gen_movi_i32(tmp0, pc);
-    gen_helper_trace_newframe(tmp0);
-    tcg_temp_free_i32(tmp0);
-}
-
-static inline void gen_trace_endframe(uint32_t pc)
-{
-    TCGv_i32 tmp0 = tcg_temp_new_i32();
-    tcg_gen_movi_i32(tmp0, pc);
-    gen_helper_trace_endframe(cpu_env, tmp0);
-    tcg_temp_free_i32(tmp0);
-}
-
-static void gen_trace_load_reg(int reg, TCGv_i64 var)
-{
-    TCGv_i32 t = tcg_const_i32(reg);
-    gen_helper_trace_load_reg(t, var);
-    tcg_temp_free_i32(t);
-}
-
-static void gen_trace_store_reg(int reg, TCGv_i64 var)
-{
-    TCGv_i32 t = tcg_const_i32(reg);
-    gen_helper_trace_store_reg(t, var);
-    tcg_temp_free_i32(t);
-}
-#endif /* HAS_TRACEWRAP */
-
 static void ppc_tr_translate_insn(DisasContextBase *dcbase, CPUState *cs)
 {
     DisasContext *ctx = container_of(dcbase, DisasContext, base);
@@ -8543,7 +8562,7 @@ static void ppc_tr_translate_insn(DisasContextBase *dcbase, CPUState *cs)
     ctx->base.pc_next = pc += 4;
 
 #ifdef HAS_TRACEWRAP
-    gen_trace_newframe(ctx->cia);
+    gen_trace_newframe(pc);
 #endif
 
     if (!is_prefix_insn(ctx, insn)) {
@@ -8568,7 +8587,7 @@ static void ppc_tr_translate_insn(DisasContextBase *dcbase, CPUState *cs)
     }
 
 #ifdef HAS_TRACEWRAP
-    gen_trace_endframe(ctx->cia);
+    gen_trace_endframe(pc);
 #endif
 
     /* End the TB when crossing a page boundary. */

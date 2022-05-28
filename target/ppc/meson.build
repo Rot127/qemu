@@ -6,7 +6,6 @@ ppc_ss.add(files(
   'excp_helper.c',
   'gdbstub.c',
   'helper_regs.c',
-  'bap-traces/bap_trace_helper.c',
 ))
 
 ppc_ss.add(when: 'CONFIG_TCG', if_true: files(
@@ -18,6 +17,10 @@ ppc_ss.add(when: 'CONFIG_TCG', if_true: files(
   'timebase_helper.c',
   'translate.c',
 ))
+
+if get_option('tracewrap')
+  ppc_ss.add(files('trace_helper.c'))
+endif
 
 ppc_ss.add(libdecnumber)
 
