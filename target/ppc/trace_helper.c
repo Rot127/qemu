@@ -30,6 +30,8 @@ void HELPER(trace_store_reg)(uint32_t reg, uint32_t val)
     qemu_trace_add_operand(oi, 0x2);
 }
 
+void HELPER(trace_mode)(void *mode) { qemu_trace_set_mode(mode); }
+
 #ifdef TARGET_PPC64
 void HELPER(trace_load_reg64)(uint32_t reg, uint64_t val)
 {

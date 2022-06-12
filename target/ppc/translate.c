@@ -79,10 +79,18 @@ static TCGv_i32 cpu_access_type;
 #include "exec/gen-icount.h"
 
 #ifdef HAS_TRACEWRAP
+#include <frame_arch.h>
+
 static inline void gen_trace_newframe(uint32_t pc)
 {
     TCGv_i32 tmp0 = tcg_temp_new_i32();
     tcg_gen_movi_i32(tmp0, pc);
+#ifdef TARGET_PPC64
+    TCGv_ptr mt = tcg_const_ptr(FRAME_MODE_PPC64);
+#else
+    TCGv_ptr mt = tcg_const_ptr(FRAME_MODE_PPC32);
+#endif
+    gen_helper_trace_mode(mt);
     gen_helper_trace_newframe(tmp0);
     tcg_temp_free_i32(tmp0);
 }
