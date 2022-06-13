@@ -131,13 +131,13 @@ static void gen_trace_store_reg(int reg, TCGv var)
 
 static inline void log_load_gpr_rx(uint32_t rx) {
     #ifdef HAS_TRACEWRAP
-    gen_trace_load_reg(cpu_reg_names[rx+8], cpu_gpr[rx]);
+    gen_trace_load_reg(rx, cpu_gpr[rx]);
     #endif
 }
 
 static inline void log_store_gpr_rx(uint32_t rx) {
     #ifdef HAS_TRACEWRAP
-    gen_trace_store_reg(cpu_reg_names[rx+8], cpu_gpr[rx]);
+    gen_trace_store_reg(rx, cpu_gpr[rx]);
     #endif
 }
 

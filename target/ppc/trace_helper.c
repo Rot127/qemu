@@ -96,8 +96,7 @@ static OperandInfo *build_load_store_reg_op(const char *name, int ls, const void
  */
 
 OperandInfo *load_store_reg(uint32_t reg, uint32_t val, int ls) {
-    // Incorrect test implementation. Assumes reg is a rX gpr register number.
-    const char *name = ppc_reg_names[reg];
+    const char *name = ppc_gpr_reg_names[reg];
     return build_load_store_reg_op(name, ls, &val, sizeof(val));
 }
 
@@ -109,6 +108,6 @@ OperandInfo *load_store_reg(uint32_t reg, uint32_t val, int ls) {
 
 OperandInfo *load_store_reg64(uint32_t reg, uint64_t val, int ls) {
     // Incorrect test implementation. Assumes reg is a rX gpr register number.
-    const char *name = ppc_reg_names[reg];
+    const char *name = ppc_gpr_reg_names[reg];
     return build_load_store_reg_op(name, ls, &val, sizeof(val));
 }
