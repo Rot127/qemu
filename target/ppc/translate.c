@@ -1733,7 +1733,7 @@ static inline void log_load_gpr_rx(uint32_t rx) {
     #endif
 }
 
-static inline void log_store_rx(uint32_t rx) {
+static inline void log_store_gpr_rx(uint32_t rx) {
     #ifdef HAS_TRACEWRAP
     gen_trace_store_reg(cpu_reg_names[rx+8], cpu_gpr[rx]);
     #endif
@@ -1743,21 +1743,26 @@ static inline void log_store_rx(uint32_t rx) {
 #define GEN_INT_ARITH_ADD(name, opc3, ca, add_ca, compute_ca, compute_ov)     \
 static void glue(gen_, name)(DisasContext *ctx)                               \
 {                                                                             \
+    log_load_gpr_rx(rA(ctx->opcode));                                         \
+    log_load_gpr_rx(rB(ctx->opcode));                                         \
     gen_op_arith_add(ctx, cpu_gpr[rD(ctx->opcode)],                           \
                      cpu_gpr[rA(ctx->opcode)], cpu_gpr[rB(ctx->opcode)],      \
                      ca, glue(ca, 32),                                        \
                      add_ca, compute_ca, compute_ov, Rc(ctx->opcode));        \
+    log_store_gpr_rx(rD(ctx->opcode));                                        \
 }
 /* Add functions with one operand and one immediate */
 #define GEN_INT_ARITH_ADD_CONST(name, opc3, const_val, ca,                    \
                                 add_ca, compute_ca, compute_ov)               \
 static void glue(gen_, name)(DisasContext *ctx)                               \
 {                                                                             \
+    log_load_gpr_rx(rA(ctx->opcode));                                         \
     TCGv t0 = tcg_const_tl(const_val);                                        \
     gen_op_arith_add(ctx, cpu_gpr[rD(ctx->opcode)],                           \
                      cpu_gpr[rA(ctx->opcode)], t0,                            \
                      ca, glue(ca, 32),                                        \
                      add_ca, compute_ca, compute_ov, Rc(ctx->opcode));        \
+    log_store_gpr_rx(rD(ctx->opcode));                                        \
     tcg_temp_free(t0);                                                        \
 }
 
@@ -1781,10 +1786,12 @@ GEN_INT_ARITH_ADD_CONST(addzeo, 0x16, 0, cpu_ca, 1, 1, 1)
 /* addic  addic.*/
 static inline void gen_op_addic(DisasContext *ctx, bool compute_rc0)
 {
+    log_load_gpr_rx(rA(ctx->opcode));
     TCGv c = tcg_const_tl(SIMM(ctx->opcode));
     gen_op_arith_add(ctx, cpu_gpr[rD(ctx->opcode)], cpu_gpr[rA(ctx->opcode)],
                      c, cpu_ca, cpu_ca32, 0, 1, 0, compute_rc0);
     tcg_temp_free(c);
+    log_load_gpr_rx(rD(ctx->opcode));
 }
 
 static void gen_addic(DisasContext *ctx)
@@ -2259,20 +2266,25 @@ static inline void gen_op_arith_subf(DisasContext *ctx, TCGv ret, TCGv arg1,
 #define GEN_INT_ARITH_SUBF(name, opc3, add_ca, compute_ca, compute_ov)        \
 static void glue(gen_, name)(DisasContext *ctx)                               \
 {                                                                             \
+    log_load_gpr_rx(rA(ctx->opcode));                                         \
+    log_load_gpr_rx(rB(ctx->opcode));                                         \
     gen_op_arith_subf(ctx, cpu_gpr[rD(ctx->opcode)],                          \
                       cpu_gpr[rA(ctx->opcode)], cpu_gpr[rB(ctx->opcode)],     \
                       add_ca, compute_ca, compute_ov, Rc(ctx->opcode));       \
+    log_store_gpr_rx(rD(ctx->opcode));                                        \
 }
 /* Sub functions with one operand and one immediate */
 #define GEN_INT_ARITH_SUBF_CONST(name, opc3, const_val,                       \
                                 add_ca, compute_ca, compute_ov)               \
 static void glue(gen_, name)(DisasContext *ctx)                               \
 {                                                                             \
+    log_load_gpr_rx(rA(ctx->opcode));                                         \
     TCGv t0 = tcg_const_tl(const_val);                                        \
     gen_op_arith_subf(ctx, cpu_gpr[rD(ctx->opcode)],                          \
                       cpu_gpr[rA(ctx->opcode)], t0,                           \
                       add_ca, compute_ca, compute_ov, Rc(ctx->opcode));       \
     tcg_temp_free(t0);                                                        \
+    log_store_gpr_rx(rD(ctx->opcode));                                        \
 }
 /* subf  subf.  subfo  subfo. */
 GEN_INT_ARITH_SUBF(subf, 0x01, 0, 0, 0)
@@ -2293,27 +2305,33 @@ GEN_INT_ARITH_SUBF_CONST(subfzeo, 0x16, 0, 1, 1, 1)
 /* subfic */
 static void gen_subfic(DisasContext *ctx)
 {
+    log_load_gpr_rx(rA(ctx->opcode));
     TCGv c = tcg_const_tl(SIMM(ctx->opcode));
     gen_op_arith_subf(ctx, cpu_gpr[rD(ctx->opcode)], cpu_gpr[rA(ctx->opcode)],
                       c, 0, 1, 0, 0);
     tcg_temp_free(c);
+    log_store_gpr_rx(rD(ctx->opcode));
 }
 
 /* neg neg. nego nego. */
 static inline void gen_op_arith_neg(DisasContext *ctx, bool compute_ov)
 {
+    log_load_gpr_rx(rA(ctx->opcode));
     TCGv zero = tcg_const_tl(0);
     gen_op_arith_subf(ctx, cpu_gpr[rD(ctx->opcode)], cpu_gpr[rA(ctx->opcode)],
                       zero, 0, 0, compute_ov, Rc(ctx->opcode));
     tcg_temp_free(zero);
+    log_store_gpr_rx(rD(ctx->opcode));
 }
 
 static void gen_neg(DisasContext *ctx)
 {
+    log_load_gpr_rx(rA(ctx->opcode));
     tcg_gen_neg_tl(cpu_gpr[rD(ctx->opcode)], cpu_gpr[rA(ctx->opcode)]);
     if (unlikely(Rc(ctx->opcode))) {
         gen_set_Rc0(ctx, cpu_gpr[rD(ctx->opcode)]);
     }
+    log_store_gpr_rx(rD(ctx->opcode));
 }
 
 static void gen_nego(DisasContext *ctx)
@@ -2325,18 +2343,23 @@ static void gen_nego(DisasContext *ctx)
 #define GEN_LOGICAL2(name, tcg_op, opc, type)                                 \
 static void glue(gen_, name)(DisasContext *ctx)                               \
 {                                                                             \
+    log_load_gpr_rx(rS(ctx->opcode));                                         \
+    log_load_gpr_rx(rB(ctx->opcode));                                         \
     tcg_op(cpu_gpr[rA(ctx->opcode)], cpu_gpr[rS(ctx->opcode)],                \
        cpu_gpr[rB(ctx->opcode)]);                                             \
     if (unlikely(Rc(ctx->opcode) != 0))                                       \
         gen_set_Rc0(ctx, cpu_gpr[rA(ctx->opcode)]);                           \
+    log_store_gpr_rx(rA(ctx->opcode));                                        \
 }
 
 #define GEN_LOGICAL1(name, tcg_op, opc, type)                                 \
 static void glue(gen_, name)(DisasContext *ctx)                               \
 {                                                                             \
+    log_load_gpr_rx(rS(ctx->opcode));                                         \
     tcg_op(cpu_gpr[rA(ctx->opcode)], cpu_gpr[rS(ctx->opcode)]);               \
     if (unlikely(Rc(ctx->opcode) != 0))                                       \
         gen_set_Rc0(ctx, cpu_gpr[rA(ctx->opcode)]);                           \
+    log_store_gpr_rx(rA(ctx->opcode));                                        \
 }
 
 /* and & and. */
@@ -2347,17 +2370,21 @@ GEN_LOGICAL2(andc, tcg_gen_andc_tl, 0x01, PPC_INTEGER);
 /* andi. */
 static void gen_andi_(DisasContext *ctx)
 {
+    log_load_gpr_rx(rS(ctx->opcode));
     tcg_gen_andi_tl(cpu_gpr[rA(ctx->opcode)], cpu_gpr[rS(ctx->opcode)],
                     UIMM(ctx->opcode));
     gen_set_Rc0(ctx, cpu_gpr[rA(ctx->opcode)]);
+    log_store_gpr_rx(rA(ctx->opcode));
 }
 
 /* andis. */
 static void gen_andis_(DisasContext *ctx)
 {
+    log_load_gpr_rx(rS(ctx->opcode));
     tcg_gen_andi_tl(cpu_gpr[rA(ctx->opcode)], cpu_gpr[rS(ctx->opcode)],
                     UIMM(ctx->opcode) << 16);
     gen_set_Rc0(ctx, cpu_gpr[rA(ctx->opcode)]);
+    log_store_gpr_rx(rA(ctx->opcode));
 }
 
 /* cntlzw */

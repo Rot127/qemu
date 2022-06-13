@@ -344,10 +344,10 @@ static bool trans_ADDI(DisasContext *ctx, arg_D *a)
     if (a->ra) {
         log_load_gpr_rx(a->ra);
         tcg_gen_addi_tl(cpu_gpr[a->rt], cpu_gpr[a->ra], a->si);
-        log_store_rx(a->rt);
+        log_store_gpr_rx(a->rt);
     } else {
         tcg_gen_movi_tl(cpu_gpr[a->rt], a->si);
-        log_store_rx(a->rt);
+        log_store_gpr_rx(a->rt);
     }
     return true;
 }
@@ -371,7 +371,7 @@ static bool trans_ADDPCIS(DisasContext *ctx, arg_DX *a)
 {
     REQUIRE_INSNS_FLAGS2(ctx, ISA300);
     tcg_gen_movi_tl(cpu_gpr[a->rt], ctx->base.pc_next + (a->d << 16));
-    log_store_rx(a->rt);
+    log_store_gpr_rx(a->rt);
     return true;
 }
 
