@@ -316,6 +316,7 @@ static bool do_cmp_D(DisasContext *ctx, arg_D_bf *a, bool s)
                         s ? "I" : "LI", ctx->cia);
             }
         }
+        log_load_gpr_rx(a->ra);
         gen_op_cmp32(cpu_gpr[a->ra], tcg_constant_tl(a->imm), s, a->bf);
         return true;
     }

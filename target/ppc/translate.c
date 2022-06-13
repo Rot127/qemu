@@ -128,6 +128,19 @@ static void gen_trace_store_reg(int reg, TCGv var)
 }
 #endif /* HAS_TRACEWRAP */
 
+
+static inline void log_load_gpr_rx(uint32_t rx) {
+    #ifdef HAS_TRACEWRAP
+    gen_trace_load_reg(cpu_reg_names[rx+8], cpu_gpr[rx]);
+    #endif
+}
+
+static inline void log_store_gpr_rx(uint32_t rx) {
+    #ifdef HAS_TRACEWRAP
+    gen_trace_store_reg(cpu_reg_names[rx+8], cpu_gpr[rx]);
+    #endif
+}
+
 void ppc_translate_init(void)
 {
     int i;
@@ -1611,8 +1624,11 @@ static void gen_isel(DisasContext *ctx)
 /* cmpb: PowerPC 2.05 specification */
 static void gen_cmpb(DisasContext *ctx)
 {
+    log_load_gpr_rx(rS(ctx->opcode));
+    log_load_gpr_rx(rB(ctx->opcode));
     gen_helper_cmpb(cpu_gpr[rA(ctx->opcode)], cpu_gpr[rS(ctx->opcode)],
                     cpu_gpr[rB(ctx->opcode)]);
+    log_store_gpr_rx(rA(ctx->opcode));
 }
 
 /***                           Integer arithmetic                          ***/
@@ -1727,18 +1743,6 @@ static inline void gen_op_arith_add(DisasContext *ctx, TCGv ret, TCGv arg1,
     }
 }
 
-static inline void log_load_gpr_rx(uint32_t rx) {
-    #ifdef HAS_TRACEWRAP
-    gen_trace_load_reg(cpu_reg_names[rx+8], cpu_gpr[rx]);
-    #endif
-}
-
-static inline void log_store_gpr_rx(uint32_t rx) {
-    #ifdef HAS_TRACEWRAP
-    gen_trace_store_reg(cpu_reg_names[rx+8], cpu_gpr[rx]);
-    #endif
-}
-
 /* Add functions with two operands */
 #define GEN_INT_ARITH_ADD(name, opc3, ca, add_ca, compute_ca, compute_ov)     \
 static void glue(gen_, name)(DisasContext *ctx)                               \
@@ -1851,9 +1855,12 @@ static inline void gen_op_arith_divw(DisasContext *ctx, TCGv ret, TCGv arg1,
 #define GEN_INT_ARITH_DIVW(name, opc3, sign, compute_ov)                      \
 static void glue(gen_, name)(DisasContext *ctx)                               \
 {                                                                             \
+    log_load_gpr_rx(rA(ctx->opcode));                                         \
+    log_load_gpr_rx(rB(ctx->opcode));                                         \
     gen_op_arith_divw(ctx, cpu_gpr[rD(ctx->opcode)],                          \
                      cpu_gpr[rA(ctx->opcode)], cpu_gpr[rB(ctx->opcode)],      \
                      sign, compute_ov);                                       \
+    log_store_gpr_rx(rD(ctx->opcode));                                        \
 }
 /* divwu  divwu.  divwuo  divwuo.   */
 GEN_INT_ARITH_DIVW(divwu, 0x0E, 0, 0);
@@ -1866,6 +1873,8 @@ GEN_INT_ARITH_DIVW(divwo, 0x1F, 1, 1);
 #define GEN_DIVE(name, hlpr, compute_ov)                                      \
 static void gen_##name(DisasContext *ctx)                                     \
 {                                                                             \
+    log_load_gpr_rx(rA(ctx->opcode));                                         \
+    log_load_gpr_rx(rB(ctx->opcode));                                         \
     TCGv_i32 t0 = tcg_const_i32(compute_ov);                                  \
     gen_helper_##hlpr(cpu_gpr[rD(ctx->opcode)], cpu_env,                      \
                      cpu_gpr[rA(ctx->opcode)], cpu_gpr[rB(ctx->opcode)], t0); \
@@ -1873,6 +1882,7 @@ static void gen_##name(DisasContext *ctx)                                     \
     if (unlikely(Rc(ctx->opcode) != 0)) {                                     \
         gen_set_Rc0(ctx, cpu_gpr[rD(ctx->opcode)]);                           \
     }                                                                         \
+    log_store_gpr_rx(rD(ctx->opcode));                                        \
 }
 
 GEN_DIVE(divweu, divweu, 0);
@@ -1926,9 +1936,12 @@ static inline void gen_op_arith_divd(DisasContext *ctx, TCGv ret, TCGv arg1,
 #define GEN_INT_ARITH_DIVD(name, opc3, sign, compute_ov)                      \
 static void glue(gen_, name)(DisasContext *ctx)                               \
 {                                                                             \
+    log_load_gpr_rx(rA(ctx->opcode));                                         \
+    log_load_gpr_rx(rB(ctx->opcode));                                         \
     gen_op_arith_divd(ctx, cpu_gpr[rD(ctx->opcode)],                          \
                       cpu_gpr[rA(ctx->opcode)], cpu_gpr[rB(ctx->opcode)],     \
                       sign, compute_ov);                                      \
+    log_store_gpr_rx(rD(ctx->opcode));                                        \
 }
 /* divdu  divdu.  divduo  divduo.   */
 GEN_INT_ARITH_DIVD(divdu, 0x0E, 0, 0);
@@ -1981,9 +1994,12 @@ static inline void gen_op_arith_modw(DisasContext *ctx, TCGv ret, TCGv arg1,
 #define GEN_INT_ARITH_MODW(name, opc3, sign)                                \
 static void glue(gen_, name)(DisasContext *ctx)                             \
 {                                                                           \
+    log_load_gpr_rx(rA(ctx->opcode));                                         \
+    log_load_gpr_rx(rB(ctx->opcode));                                         \
     gen_op_arith_modw(ctx, cpu_gpr[rD(ctx->opcode)],                        \
                       cpu_gpr[rA(ctx->opcode)], cpu_gpr[rB(ctx->opcode)],   \
                       sign);                                                \
+    log_store_gpr_rx(rD(ctx->opcode));                                        \
 }
 
 GEN_INT_ARITH_MODW(moduw, 0x08, 0);
@@ -2026,9 +2042,12 @@ static inline void gen_op_arith_modd(DisasContext *ctx, TCGv ret, TCGv arg1,
 #define GEN_INT_ARITH_MODD(name, opc3, sign)                            \
 static void glue(gen_, name)(DisasContext *ctx)                           \
 {                                                                         \
+  log_load_gpr_rx(rA(ctx->opcode));                                         \
+  log_load_gpr_rx(rB(ctx->opcode));                                         \
   gen_op_arith_modd(ctx, cpu_gpr[rD(ctx->opcode)],                        \
                     cpu_gpr[rA(ctx->opcode)], cpu_gpr[rB(ctx->opcode)],   \
                     sign);                                                \
+  log_store_gpr_rx(rD(ctx->opcode));                                        \
 }
 
 GEN_INT_ARITH_MODD(modud, 0x08, 0);
@@ -2040,7 +2059,8 @@ static void gen_mulhw(DisasContext *ctx)
 {
     TCGv_i32 t0 = tcg_temp_new_i32();
     TCGv_i32 t1 = tcg_temp_new_i32();
-
+    log_load_gpr_rx(rA(ctx->opcode));
+    log_load_gpr_rx(rB(ctx->opcode));
     tcg_gen_trunc_tl_i32(t0, cpu_gpr[rA(ctx->opcode)]);
     tcg_gen_trunc_tl_i32(t1, cpu_gpr[rB(ctx->opcode)]);
     tcg_gen_muls2_i32(t0, t1, t0, t1);
@@ -2050,6 +2070,7 @@ static void gen_mulhw(DisasContext *ctx)
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rD(ctx->opcode)]);
     }
+    log_store_gpr_rx(rD(ctx->opcode));
 }
 
 /* mulhwu  mulhwu.  */
@@ -2058,6 +2079,8 @@ static void gen_mulhwu(DisasContext *ctx)
     TCGv_i32 t0 = tcg_temp_new_i32();
     TCGv_i32 t1 = tcg_temp_new_i32();
 
+    log_load_gpr_rx(rA(ctx->opcode));
+    log_load_gpr_rx(rB(ctx->opcode));
     tcg_gen_trunc_tl_i32(t0, cpu_gpr[rA(ctx->opcode)]);
     tcg_gen_trunc_tl_i32(t1, cpu_gpr[rB(ctx->opcode)]);
     tcg_gen_mulu2_i32(t0, t1, t0, t1);
@@ -2067,11 +2090,14 @@ static void gen_mulhwu(DisasContext *ctx)
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rD(ctx->opcode)]);
     }
+    log_store_gpr_rx(rD(ctx->opcode));
 }
 
 /* mullw  mullw. */
 static void gen_mullw(DisasContext *ctx)
 {
+    log_load_gpr_rx(rA(ctx->opcode));
+    log_load_gpr_rx(rB(ctx->opcode));
 #if defined(TARGET_PPC64)
     TCGv_i64 t0, t1;
     t0 = tcg_temp_new_i64();
@@ -2088,6 +2114,7 @@ static void gen_mullw(DisasContext *ctx)
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rD(ctx->opcode)]);
     }
+    log_store_gpr_rx(rD(ctx->opcode));
 }
 
 /* mullwo  mullwo. */
@@ -2095,7 +2122,8 @@ static void gen_mullwo(DisasContext *ctx)
 {
     TCGv_i32 t0 = tcg_temp_new_i32();
     TCGv_i32 t1 = tcg_temp_new_i32();
-
+    log_load_gpr_rx(rA(ctx->opcode));
+    log_load_gpr_rx(rB(ctx->opcode));
     tcg_gen_trunc_tl_i32(t0, cpu_gpr[rA(ctx->opcode)]);
     tcg_gen_trunc_tl_i32(t1, cpu_gpr[rB(ctx->opcode)]);
     tcg_gen_muls2_i32(t0, t1, t0, t1);
@@ -2118,31 +2146,39 @@ static void gen_mullwo(DisasContext *ctx)
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rD(ctx->opcode)]);
     }
+    log_store_gpr_rx(rD(ctx->opcode));
 }
 
 /* mulli */
 static void gen_mulli(DisasContext *ctx)
 {
+    log_load_gpr_rx(rA(ctx->opcode));
     tcg_gen_muli_tl(cpu_gpr[rD(ctx->opcode)], cpu_gpr[rA(ctx->opcode)],
                     SIMM(ctx->opcode));
+    log_store_gpr_rx(rD(ctx->opcode));
 }
 
 #if defined(TARGET_PPC64)
 /* mulhd  mulhd. */
 static void gen_mulhd(DisasContext *ctx)
 {
+    log_load_gpr_rx(rA(ctx->opcode));
+    log_load_gpr_rx(rB(ctx->opcode));
     TCGv lo = tcg_temp_new();
     tcg_gen_muls2_tl(lo, cpu_gpr[rD(ctx->opcode)],
                      cpu_gpr[rA(ctx->opcode)], cpu_gpr[rB(ctx->opcode)]);
     tcg_temp_free(lo);
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rD(ctx->opcode)]);
+    log_store_gpr_rx(rD(ctx->opcode));
     }
 }
 
 /* mulhdu  mulhdu. */
 static void gen_mulhdu(DisasContext *ctx)
 {
+    log_load_gpr_rx(rA(ctx->opcode));
+    log_load_gpr_rx(rB(ctx->opcode));
     TCGv lo = tcg_temp_new();
     tcg_gen_mulu2_tl(lo, cpu_gpr[rD(ctx->opcode)],
                      cpu_gpr[rA(ctx->opcode)], cpu_gpr[rB(ctx->opcode)]);
@@ -2150,16 +2186,20 @@ static void gen_mulhdu(DisasContext *ctx)
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rD(ctx->opcode)]);
     }
+    log_store_gpr_rx(rD(ctx->opcode));
 }
 
 /* mulld  mulld. */
 static void gen_mulld(DisasContext *ctx)
 {
+    log_load_gpr_rx(rA(ctx->opcode));
+    log_load_gpr_rx(rB(ctx->opcode));
     tcg_gen_mul_tl(cpu_gpr[rD(ctx->opcode)], cpu_gpr[rA(ctx->opcode)],
                    cpu_gpr[rB(ctx->opcode)]);
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rD(ctx->opcode)]);
     }
+    log_store_gpr_rx(rD(ctx->opcode));
 }
 
 /* mulldo  mulldo. */
@@ -2167,7 +2207,8 @@ static void gen_mulldo(DisasContext *ctx)
 {
     TCGv_i64 t0 = tcg_temp_new_i64();
     TCGv_i64 t1 = tcg_temp_new_i64();
-
+    log_load_gpr_rx(rA(ctx->opcode));
+    log_load_gpr_rx(rB(ctx->opcode));
     tcg_gen_muls2_i64(t0, t1, cpu_gpr[rA(ctx->opcode)],
                       cpu_gpr[rB(ctx->opcode)]);
     tcg_gen_mov_i64(cpu_gpr[rD(ctx->opcode)], t0);
@@ -2185,6 +2226,7 @@ static void gen_mulldo(DisasContext *ctx)
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rD(ctx->opcode)]);
     }
+    log_store_gpr_rx(rD(ctx->opcode));
 }
 #endif
 
