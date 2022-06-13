@@ -56,7 +56,9 @@
 /*****************************************************************************/
 /* Code translation helpers                                                  */
 
-/* global register indexes */
+/* global register indexes 
+ * Note that they are not filled in the order listed here.
+ */
 static char cpu_reg_names[10 * 3 + 22 * 4   /* GPR */
                           + 10 * 4 + 22 * 5 /* SPE GPRh */
                           + 8 * 5           /* CRF */];
@@ -1725,15 +1727,15 @@ static inline void gen_op_arith_add(DisasContext *ctx, TCGv ret, TCGv arg1,
     }
 }
 
-static inline void log_load_rx(uint32_t rx) {
+static inline void log_load_gpr_rx(uint32_t rx) {
     #ifdef HAS_TRACEWRAP
-    gen_trace_load_reg(cpu_reg_names[rx], cpu_gpr[rx]);
+    gen_trace_load_reg(cpu_reg_names[rx+8], cpu_gpr[rx]);
     #endif
 }
 
 static inline void log_store_rx(uint32_t rx) {
     #ifdef HAS_TRACEWRAP
-    gen_trace_store_reg(cpu_reg_names[rx], cpu_gpr[rx]);
+    gen_trace_store_reg(cpu_reg_names[rx+8], cpu_gpr[rx]);
     #endif
 }
 
