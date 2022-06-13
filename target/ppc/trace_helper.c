@@ -30,6 +30,12 @@ void HELPER(trace_store_reg)(uint32_t reg, uint32_t val)
     qemu_trace_add_operand(oi, 0x2);
 }
 
+void HELPER(trace_store_crf_reg)(uint32_t crf, uint32_t val)
+{
+    OperandInfo *oi = load_store_crf_reg(crf, val, 1);
+    qemu_trace_add_operand(oi, 0x2);
+}
+
 void HELPER(trace_mode)(void *mode) { qemu_trace_set_mode(mode); }
 
 #ifdef TARGET_PPC64
@@ -89,25 +95,17 @@ static OperandInfo *build_load_store_reg_op(const char *name, int ls, const void
     return oi;
 }
 
-/*
- * BAP trace predefined functions.
- *
- * These functions are predefined in BAPs tracewrap.h and need to be implemented by us.
- */
-
 OperandInfo *load_store_reg(uint32_t reg, uint32_t val, int ls) {
     const char *name = ppc_gpr_reg_names[reg];
     return build_load_store_reg_op(name, ls, &val, sizeof(val));
 }
 
-/*
- * BAP trace predefined functions.
- *
- * These functions are predefined in BAPs tracewrap.h and need to be implemented by us.
- */
-
 OperandInfo *load_store_reg64(uint32_t reg, uint64_t val, int ls) {
-    // Incorrect test implementation. Assumes reg is a rX gpr register number.
     const char *name = ppc_gpr_reg_names[reg];
+    return build_load_store_reg_op(name, ls, &val, sizeof(val));
+}
+
+OperandInfo *load_store_crf_reg(uint32_t crf, uint64_t val, int ls) {
+    const char *name = ppc_crf_reg_names[crf];
     return build_load_store_reg_op(name, ls, &val, sizeof(val));
 }

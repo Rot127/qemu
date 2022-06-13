@@ -126,6 +126,13 @@ static void gen_trace_store_reg(int reg, TCGv var)
     #endif
     tcg_temp_free_i32(t);
 }
+
+static void gen_trace_store_crf_reg(int crf, TCGv_i32 var)
+{
+    TCGv_i32 t = tcg_const_i32(crf);
+    gen_helper_trace_store_crf_reg(t, var);
+    tcg_temp_free_i32(t);
+}
 #endif /* HAS_TRACEWRAP */
 
 
@@ -138,6 +145,12 @@ static inline void log_load_gpr_rx(uint32_t rx) {
 static inline void log_store_gpr_rx(uint32_t rx) {
     #ifdef HAS_TRACEWRAP
     gen_trace_store_reg(rx, cpu_gpr[rx]);
+    #endif
+}
+
+static inline void log_store_crf(uint32_t crf) {
+    #ifdef HAS_TRACEWRAP
+    gen_trace_store_crf_reg(crf, cpu_crf[crf]);
     #endif
 }
 
@@ -1509,6 +1522,7 @@ static inline void gen_op_cmp(TCGv arg0, TCGv arg1, int s, int crf)
     tcg_gen_trunc_tl_i32(t, t0);
     tcg_gen_trunc_tl_i32(cpu_crf[crf], cpu_so);
     tcg_gen_or_i32(cpu_crf[crf], cpu_crf[crf], t);
+    log_store_crf(crf);
 
     tcg_temp_free(t0);
     tcg_temp_free(t1);
