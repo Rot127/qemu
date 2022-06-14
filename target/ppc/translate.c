@@ -3415,6 +3415,7 @@ static void glue(gen_qemu_, ldop)(DisasContext *ctx,                    \
                                   TCGv addr)                            \
 {                                                                       \
     tcg_gen_qemu_ld_tl(val, addr, ctx->mem_idx, op);                    \
+    log_load_mem(addr, val, op);                                        \
 }
 
 GEN_QEMU_LOAD_TL(ld8u,  DEF_MEMOP(MO_UB))
@@ -3432,6 +3433,7 @@ static void glue(gen_qemu_, glue(ldop, _i64))(DisasContext *ctx,    \
                                              TCGv addr)             \
 {                                                                   \
     tcg_gen_qemu_ld_i64(val, addr, ctx->mem_idx, op);               \
+    log_load_mem_i64(addr, val, op);                                    \
 }
 
 GEN_QEMU_LOAD_64(ld8u,  DEF_MEMOP(MO_UB))
@@ -3449,6 +3451,7 @@ static void glue(gen_qemu_, stop)(DisasContext *ctx,                    \
                                   TCGv val,                             \
                                   TCGv addr)                            \
 {                                                                       \
+    log_store_mem(addr, val, op);                                       \
     tcg_gen_qemu_st_tl(val, addr, ctx->mem_idx, op);                    \
 }
 
@@ -3466,6 +3469,7 @@ static void glue(gen_qemu_, glue(stop, _i64))(DisasContext *ctx,  \
                                               TCGv_i64 val,       \
                                               TCGv addr)          \
 {                                                                 \
+    log_store_mem_i64(addr, val, op);                             \
     tcg_gen_qemu_st_i64(val, addr, ctx->mem_idx, op);             \
 }
 
@@ -3487,6 +3491,7 @@ static void glue(gen_, name##x)(DisasContext *ctx)                            \
     EA = tcg_temp_new();                                                      \
     gen_addr_reg_index(ctx, EA);                                              \
     gen_qemu_##ldop(ctx, cpu_gpr[rD(ctx->opcode)], EA);                       \
+    log_store_gpr_rx(rD(ctx->opcode));                                        \
     tcg_temp_free(EA);                                                        \
 }
 
@@ -3505,6 +3510,7 @@ static void glue(gen_, name##epx)(DisasContext *ctx)                          \
     EA = tcg_temp_new();                                                      \
     gen_addr_reg_index(ctx, EA);                                              \
     tcg_gen_qemu_ld_tl(cpu_gpr[rD(ctx->opcode)], EA, PPC_TLB_EPID_LOAD, ldop);\
+    log_store_gpr_rx(rD(ctx->opcode));                                        \
     tcg_temp_free(EA);                                                        \
 }
 
@@ -3531,6 +3537,7 @@ static void glue(gen_, name##x)(DisasContext *ctx)                            \
     chk;                                                                      \
     gen_set_access_type(ctx, ACCESS_INT);                                     \
     EA = tcg_temp_new();                                                      \
+    log_load_gpr_rx(rS(ctx->opcode));                                         \
     gen_addr_reg_index(ctx, EA);                                              \
     gen_qemu_##stop(ctx, cpu_gpr[rS(ctx->opcode)], EA);                       \
     tcg_temp_free(EA);                                                        \
@@ -3551,6 +3558,7 @@ static void glue(gen_, name##epx)(DisasContext *ctx)                          \
     gen_addr_reg_index(ctx, EA);                                              \
     tcg_gen_qemu_st_tl(                                                       \
         cpu_gpr[rD(ctx->opcode)], EA, PPC_TLB_EPID_STORE, stop);              \
+    log_store_gpr_rx(rD(ctx->opcode));                                        \
     tcg_temp_free(EA);                                                        \
 }
 

@@ -21,6 +21,7 @@
  * Fixed-Point Load/Store Instructions
  */
 
+#include "tracewrap.h"
 static bool do_ldst(DisasContext *ctx, int rt, int ra, TCGv displ, bool update,
                     bool store, MemOp mop)
 {
@@ -35,12 +36,16 @@ static bool do_ldst(DisasContext *ctx, int rt, int ra, TCGv displ, bool update,
     ea = do_ea_calc(ctx, ra, displ);
     mop ^= ctx->default_tcg_memop_mask;
     if (store) {
+        log_store_mem(ea, cpu_gpr[rt], mop);
         tcg_gen_qemu_st_tl(cpu_gpr[rt], ea, ctx->mem_idx, mop);
     } else {
         tcg_gen_qemu_ld_tl(cpu_gpr[rt], ea, ctx->mem_idx, mop);
+        log_load_mem(ea, cpu_gpr[rt], mop);
+        log_store_gpr_rx(rt);
     }
     if (update) {
         tcg_gen_mov_tl(cpu_gpr[ra], ea);
+        log_store_gpr_rx(ra);
     }
     tcg_temp_free(ea);
 
