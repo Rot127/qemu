@@ -1,4 +1,5 @@
 #include "tracewrap.h"
+#include "qemu/log.h"
 #include "exec/helper-proto.h"
 
 #include "trace_helper.h"
@@ -8,6 +9,24 @@
  * QEMUs helper.
  */
 
+static uint32_t memop2size(MemOp op) {
+    switch(op & MO_SIZE) {
+    default:
+        qemu_log("Memory access size not handled for MemOp: %d.\n", op);
+        return 0;
+    case MO_8:
+        return 8;
+    case MO_16:
+        return 16;
+    case MO_32:
+        return 32;
+    case MO_64:
+        return 64;
+    case MO_128:
+        return 128;
+    }
+}
+
 void HELPER(trace_newframe)(uint32_t pc)
 {
     qemu_trace_newframe(pc, 0);
@@ -16,6 +35,30 @@ void HELPER(trace_newframe)(uint32_t pc)
 void HELPER(trace_endframe)(CPUPPCState *state, uint32_t pc)
 {
     qemu_trace_endframe(state, pc, PPC_INSN_SIZE);
+}
+
+void HELPER(trace_load_mem)(uint32_t addr, uint32_t val, MemOp op)
+{
+    OperandInfo *oi = load_store_mem(addr, 0, &val, memop2size(op));
+    qemu_trace_add_operand(oi, 0x1);
+}
+
+void HELPER(trace_store_mem)(uint32_t addr, uint32_t val, MemOp op)
+{
+    OperandInfo *oi = load_store_mem(addr, 1, &val, memop2size(op));
+    qemu_trace_add_operand(oi, 0x2);
+}
+
+void HELPER(trace_load_mem_i64)(uint32_t addr, uint64_t val, MemOp op)
+{
+    OperandInfo *oi = load_store_mem(addr, 0, &val, memop2size(op));
+    qemu_trace_add_operand(oi, 0x1);
+}
+
+void HELPER(trace_store_mem_i64)(uint32_t addr, uint64_t val, MemOp op)
+{
+    OperandInfo *oi = load_store_mem(addr, 1, &val, memop2size(op));
+    qemu_trace_add_operand(oi, 0x2);
 }
 
 void HELPER(trace_load_reg)(uint32_t reg, uint32_t val)
@@ -48,6 +91,18 @@ void HELPER(trace_load_reg64)(uint32_t reg, uint64_t val)
 void HELPER(trace_store_reg64)(uint32_t reg, uint64_t val)
 {
     OperandInfo *oi = load_store_reg64(reg, val, 1);
+    qemu_trace_add_operand(oi, 0x2);
+}
+
+void HELPER(trace_load_mem64)(uint64_t addr, uint64_t val, MemOp op)
+{
+    OperandInfo *oi = load_store_mem(addr, 0, &val, memop2size(op));
+    qemu_trace_add_operand(oi, 0x1);
+}
+
+void HELPER(trace_store_mem64)(uint64_t addr, uint64_t val, MemOp op)
+{
+    OperandInfo *oi = load_store_mem(addr, 1, &val, memop2size(op));
     qemu_trace_add_operand(oi, 0x2);
 }
 #endif
@@ -92,6 +147,34 @@ static OperandInfo *build_load_store_reg_op(const char *name, int ls, const void
     oi->value.data = g_malloc(oi->value.len);
     memcpy(oi->value.data, data, data_size);
 
+    return oi;
+}
+
+OperandInfo *load_store_mem(uint64_t addr, int ls, const void *data, size_t data_size) {
+    MemOperand * mo = g_new(MemOperand, 1);
+    mem_operand__init(mo);
+
+    mo->address = addr;
+
+    OperandInfoSpecific *ois = g_new(OperandInfoSpecific, 1);
+    operand_info_specific__init(ois);
+    ois->mem_operand = mo;
+
+    OperandUsage *ou = g_new(OperandUsage, 1);
+    operand_usage__init(ou);
+    if (ls == 0) {
+        ou->read = 1;
+    } else {
+        ou->written = 1;
+    }
+    OperandInfo *oi = g_new(OperandInfo, 1);
+    operand_info__init(oi);
+    oi->bit_length = data_size * 8;
+    oi->operand_info_specific = ois;
+    oi->operand_usage = ou;
+    oi->value.len = data_size;
+    oi->value.data = g_malloc(oi->value.len);
+    memcpy(oi->value.data, data, data_size);
     return oi;
 }
 

@@ -135,6 +135,52 @@ static void gen_trace_store_crf_reg(int crf, TCGv_i32 var)
 }
 #endif /* HAS_TRACEWRAP */
 
+static inline void log_load_mem_i64(TCGv addr, TCGv_i64 val, MemOp op) {
+    #ifdef HAS_TRACEWRAP
+    TCGv_i32 o = tcg_const_i32(op);
+    #ifdef TARGET_PPC64
+    gen_helper_trace_load_mem64(addr, val, o);
+    #else
+    gen_helper_trace_load_mem_i64(addr, val, o);
+    #endif
+    tcg_temp_free_i32(o);
+    #endif
+}
+
+static inline void log_store_mem_i64(TCGv addr, TCGv_i64 val, MemOp op) {
+    #ifdef HAS_TRACEWRAP
+    TCGv_i32 o = tcg_const_i32(op);
+    #ifdef TARGET_PPC64
+    gen_helper_trace_store_mem64(addr, val, o);
+    #else
+    gen_helper_trace_store_mem_i64(addr, val, o);
+    #endif
+    tcg_temp_free_i32(o);
+    #endif
+}
+static inline void log_load_mem(TCGv addr, TCGv val, MemOp op) {
+    #ifdef HAS_TRACEWRAP
+    TCGv_i32 o = tcg_const_i32(op);
+    #ifdef TARGET_PPC64
+    gen_helper_trace_load_mem64(addr, val, o);
+    #else
+    gen_helper_trace_load_mem(addr, val, o);
+    #endif
+    tcg_temp_free_i32(o);
+    #endif
+}
+
+static inline void log_store_mem(TCGv addr, TCGv val, MemOp op) {
+    #ifdef HAS_TRACEWRAP
+    TCGv_i32 o = tcg_const_i32(op);
+    #ifdef TARGET_PPC64
+    gen_helper_trace_store_mem64(addr, val, o);
+    #else
+    gen_helper_trace_store_mem(addr, val, o);
+    #endif
+    tcg_temp_free_i32(o);
+    #endif
+}
 
 static inline void log_load_gpr_rx(uint32_t rx) {
     #ifdef HAS_TRACEWRAP
