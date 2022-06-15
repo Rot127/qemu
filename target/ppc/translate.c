@@ -94,6 +94,7 @@ static inline void gen_trace_newframe(uint32_t pc)
 #endif
     gen_helper_trace_mode(mt);
     gen_helper_trace_newframe(tmp0);
+    tcg_temp_free_ptr(mt);
     tcg_temp_free_i32(tmp0);
 }
 
@@ -158,6 +159,7 @@ static inline void log_store_mem_i64(TCGv addr, TCGv_i64 val, MemOp op) {
     tcg_temp_free_i32(o);
     #endif
 }
+
 static inline void log_load_mem(TCGv addr, TCGv val, MemOp op) {
     #ifdef HAS_TRACEWRAP
     TCGv_i32 o = tcg_const_i32(op);
