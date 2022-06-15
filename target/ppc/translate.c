@@ -48,6 +48,7 @@
 /* Include definitions for instructions classes and implementations flags */
 /* #define PPC_DEBUG_DISAS */
 
+#define PPC_DEBUG_DISAS
 #ifdef PPC_DEBUG_DISAS
 #  define LOG_DISAS(...) qemu_log_mask(CPU_LOG_TB_IN_ASM, ## __VA_ARGS__)
 #else
@@ -374,6 +375,9 @@ static inline void gen_update_nip(DisasContext *ctx, target_ulong nip)
 
 static void gen_exception_err(DisasContext *ctx, uint32_t excp, uint32_t error)
 {
+#ifdef HAS_TRACEWRAP
+    gen_trace_endframe(ctx->cia);
+#endif
     TCGv_i32 t0, t1;
 
     /*
@@ -391,6 +395,9 @@ static void gen_exception_err(DisasContext *ctx, uint32_t excp, uint32_t error)
 
 static void gen_exception(DisasContext *ctx, uint32_t excp)
 {
+#ifdef HAS_TRACEWRAP
+    gen_trace_endframe(ctx->cia);
+#endif
     TCGv_i32 t0;
 
     /*
@@ -407,6 +414,9 @@ static void gen_exception(DisasContext *ctx, uint32_t excp)
 static void gen_exception_nip(DisasContext *ctx, uint32_t excp,
                               target_ulong nip)
 {
+#ifdef HAS_TRACEWRAP
+    gen_trace_endframe(ctx->cia);
+#endif
     TCGv_i32 t0;
 
     gen_update_nip(ctx, nip);
@@ -460,6 +470,9 @@ static uint32_t gen_prep_dbgex(DisasContext *ctx)
 
 static void gen_debug_exception(DisasContext *ctx)
 {
+#ifdef HAS_TRACEWRAP
+    gen_trace_endframe(ctx->cia);
+#endif
     gen_helper_raise_exception(cpu_env, tcg_constant_i32(gen_prep_dbgex(ctx)));
     ctx->base.is_jmp = DISAS_NORETURN;
 }
@@ -4391,6 +4404,9 @@ static void gen_lookup_and_goto_ptr(DisasContext *ctx)
 /***                                Branch                                 ***/
 static void gen_goto_tb(DisasContext *ctx, int n, target_ulong dest)
 {
+#ifdef HAS_TRACEWRAP
+    gen_trace_endframe(ctx->cia);
+#endif
     if (NARROW_MODE(ctx)) {
         dest = (uint32_t) dest;
     }
