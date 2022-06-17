@@ -8848,7 +8848,7 @@ static void ppc_tr_translate_insn(DisasContextBase *dcbase, CPUState *cs)
     ctx->base.pc_next = pc += 4;
 
 #ifdef HAS_TRACEWRAP
-    gen_trace_newframe(pc);
+    gen_trace_newframe(ctx->cia);
 #endif
 
     if (!is_prefix_insn(ctx, insn)) {
@@ -8873,7 +8873,7 @@ static void ppc_tr_translate_insn(DisasContextBase *dcbase, CPUState *cs)
     }
 
 #ifdef HAS_TRACEWRAP
-    gen_trace_endframe(pc);
+    gen_trace_endframe(ctx->cia);
 #endif
 
     /* End the TB when crossing a page boundary. */
