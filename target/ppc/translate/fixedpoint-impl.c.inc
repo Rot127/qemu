@@ -22,6 +22,7 @@
  */
 
 #include "tracewrap.h"
+
 static bool do_ldst(DisasContext *ctx, int rt, int ra, TCGv displ, bool update,
                     bool store, MemOp mop)
 {

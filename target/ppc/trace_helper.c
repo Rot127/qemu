@@ -15,15 +15,15 @@ static uint32_t memop2size(MemOp op) {
         qemu_log("Memory access size not handled for MemOp: %d.\n", op);
         return 0;
     case MO_8:
-        return 8;
+        return 1;
     case MO_16:
-        return 16;
+        return 2;
     case MO_32:
-        return 32;
+        return 4;
     case MO_64:
-        return 64;
+        return 8;
     case MO_128:
-        return 128;
+        return 16;
     }
 }
 
