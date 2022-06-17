@@ -100,15 +100,15 @@ void HELPER(trace_store_reg)(uint32_t reg, uint32_t val)
     qemu_trace_add_operand(oi, 0x2);
 }
 
-void HELPER(trace_store_crf_reg)(uint32_t crf, uint32_t val)
+void HELPER(trace_store_crf)(uint32_t crf, uint32_t val)
 {
-    OperandInfo *oi = load_store_crf_reg(crf, val, 1);
+    OperandInfo *oi = load_store_crf(crf, val, 1);
     qemu_trace_add_operand(oi, 0x2);
 }
 
-void HELPER(trace_load_crf_reg)(uint32_t crf, uint32_t val)
+void HELPER(trace_load_crf)(uint32_t crf, uint32_t val)
 {
-    OperandInfo *oi = load_store_crf_reg(crf, val, 0);
+    OperandInfo *oi = load_store_crf(crf, val, 0);
     qemu_trace_add_operand(oi, 0x1);
 }
 
@@ -257,8 +257,8 @@ OperandInfo *load_store_reg64(uint32_t reg, uint64_t val, int ls) {
     return build_load_store_reg_op(name, ls, &val, sizeof(val));
 }
 
-OperandInfo *load_store_crf_reg(uint32_t crf, uint64_t val, int ls) {
-    const char *name = ppc_crf_reg_names[crf];
+OperandInfo *load_store_crf(uint32_t crf, uint64_t val, int ls) {
+    const char *name = ppc_crf_names[crf];
     return build_load_store_reg_op(name, ls, &val, 1);
 }
 

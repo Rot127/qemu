@@ -128,17 +128,17 @@ static void gen_trace_store_reg(int reg, TCGv var)
     tcg_temp_free_i32(t);
 }
 
-static void gen_trace_store_crf_reg(int crf, TCGv_i32 var)
+static void gen_trace_store_crf(int crf, TCGv_i32 var)
 {
     TCGv_i32 t = tcg_const_i32(crf);
-    gen_helper_trace_store_crf_reg(t, var);
+    gen_helper_trace_store_crf(t, var);
     tcg_temp_free_i32(t);
 }
 
-static void gen_trace_load_crf_reg(int crf, TCGv_i32 var)
+static void gen_trace_load_crf(int crf, TCGv_i32 var)
 {
     TCGv_i32 t = tcg_const_i32(crf);
-    gen_helper_trace_load_crf_reg(t, var);
+    gen_helper_trace_load_crf(t, var);
     tcg_temp_free_i32(t);
 }
 #endif /* HAS_TRACEWRAP */
@@ -205,13 +205,13 @@ static inline void log_store_gpr(uint32_t rx) {
 
 static inline void log_store_crf(uint32_t crf) {
     #ifdef HAS_TRACEWRAP
-    gen_trace_store_crf_reg(crf, cpu_crf[crf]);
+    gen_trace_store_crf(crf, cpu_crf[crf]);
     #endif
 }
 
 static inline void log_load_crf(uint32_t crf) {
     #ifdef HAS_TRACEWRAP
-    gen_trace_load_crf_reg(crf, cpu_crf[crf]);
+    gen_trace_load_crf(crf, cpu_crf[crf]);
     #endif
 }
 

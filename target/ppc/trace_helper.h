@@ -12,7 +12,7 @@
 #define TRACE_SPECIAL_NAME_BASE (TRACE_GPR_H_NAME_BASE + (10 * 4) + (22 * 5))
 
 
-const char *ppc_crf_reg_names[] = { "crf0", "crf1", "crf2", "crf3", "crf4", "crf5", "crf6", "crf7" };
+const char *ppc_crf_names[] = { "crf0", "crf1", "crf2", "crf3", "crf4", "crf5", "crf6", "crf7" };
 
 const char *ppc_gpr_reg_names[] = { "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9",
     "r10", "r11", "r12", "r13", "r14", "r15", "r16", "r17", "r18", "r19", "r20", "r21", "r22",
@@ -44,7 +44,7 @@ const char *ppc_not_used_reg_names[] = { "vs0", "vs1", "vs2", "vs3", "vs4", "vs5
     NULL
 };
 
-OperandInfo *load_store_crf_reg(uint32_t reg, uint64_t val, int ls);
+OperandInfo *load_store_crf(uint32_t reg, uint64_t val, int ls);
 OperandInfo *load_store_spr_reg(const char *name, uint64_t val, uint32_t size, int ls);
 
 #endif /* TRACE_HELPER */
