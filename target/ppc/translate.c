@@ -5050,6 +5050,9 @@ static inline void gen_op_mfspr(DisasContext *ctx)
     if (likely(read_cb != NULL)) {
         if (likely(read_cb != SPR_NOACCESS)) {
             (*read_cb)(ctx, rD(ctx->opcode), sprn);
+            #ifdef HAS_TRACEWRAP
+            log_store_gpr_rx(rD(ctx->opcode));
+            #endif
         } else {
             /* Privilege exception */
             /*
@@ -5241,6 +5244,9 @@ static void gen_mtspr(DisasContext *ctx)
 #endif
     if (likely(write_cb != NULL)) {
         if (likely(write_cb != SPR_NOACCESS)) {
+            #ifdef HAS_TRACEWRAP
+            log_load_gpr_rx(rS(ctx->opcode));
+            #endif
             (*write_cb)(ctx, sprn, rS(ctx->opcode));
         } else {
             /* Privilege exception */
