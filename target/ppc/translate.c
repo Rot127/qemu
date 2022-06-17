@@ -1612,6 +1612,7 @@ static inline void gen_op_cmp(TCGv arg0, TCGv arg1, int s, int crf)
                        t0, arg0, arg1, t1, t0);
 
     tcg_gen_trunc_tl_i32(t, t0);
+    log_load_spr(XER_SO, cpu_so);
     tcg_gen_trunc_tl_i32(cpu_crf[crf], cpu_so);
     tcg_gen_or_i32(cpu_crf[crf], cpu_crf[crf], t);
     log_store_crf(crf);
@@ -1764,6 +1765,11 @@ static inline void gen_op_arith_compute_ov(DisasContext *ctx, TCGv arg0,
         tcg_gen_extract_tl(cpu_ov, cpu_ov, TARGET_LONG_BITS - 1, 1);
     }
     tcg_gen_or_tl(cpu_so, cpu_so, cpu_ov);
+    #ifdef TARGET_PPC64
+    log_store_spr(XER_OV32, cpu_ov32);
+    #endif
+    log_store_spr(XER_OV, cpu_ov);
+    log_store_spr(XER_SO, cpu_so);
 }
 
 static inline void gen_op_arith_compute_ca32(DisasContext *ctx,
@@ -1771,6 +1777,9 @@ static inline void gen_op_arith_compute_ca32(DisasContext *ctx,
                                              TCGv ca32, int sub)
 {
     TCGv t0;
+    #ifdef TARGET_PPC64
+    log_store_spr(XER_CA32, ca32);
+    #endif
 
     if (!is_isa300(ctx)) {
         return;
@@ -1815,6 +1824,7 @@ static inline void gen_op_arith_add(DisasContext *ctx, TCGv ret, TCGv arg1,
             tcg_gen_xor_tl(ca, t0, t1);        /* bits changed w/ carry */
             tcg_temp_free(t1);
             tcg_gen_extract_tl(ca, ca, 32, 1);
+            log_store_spr(XER_CA, ca);
             if (is_isa300(ctx)) {
                 tcg_gen_mov_tl(ca32, ca);
             }

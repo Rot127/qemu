@@ -1,4 +1,5 @@
 #include "tracewrap.h"
+#include "cpu.h"
 #include "qemu/log.h"
 #include "exec/helper-proto.h"
 
@@ -24,6 +25,28 @@ static uint32_t memop2size(MemOp op) {
         return 8;
     case MO_128:
         return 16;
+    }
+}
+
+static const char *get_spr_name(uint32_t reg, CPUPPCState *env) {
+    const char *name = env->spr_cb[reg].name;
+    if (name) {
+        return name;
+    }
+
+    switch (reg) {
+    default:
+        return "not_handled_reg";
+    case XER_SO:
+        return "so";
+    case XER_CA:
+        return "ca";
+    case XER_CA32:
+        return "ca32";
+    case XER_OV:
+        return "ov";
+    case XER_OV32:
+        return "ov32";
     }
 }
 
@@ -85,7 +108,7 @@ void HELPER(trace_store_crf_reg)(uint32_t crf, uint32_t val)
 
 void HELPER(trace_load_spr_reg)(CPUPPCState *env, uint32_t reg, uint32_t val)
 {
-    const char *name = env->spr_cb[reg].name;
+    const char *name = get_spr_name(reg, env);
     uint32_t size = sizeof(env->spr_cb[reg].default_value);
     OperandInfo *oi = load_store_spr_reg(name, val, size, 0);
     qemu_trace_add_operand(oi, 0x1);
@@ -93,7 +116,7 @@ void HELPER(trace_load_spr_reg)(CPUPPCState *env, uint32_t reg, uint32_t val)
 
 void HELPER(trace_store_spr_reg)(CPUPPCState *env, uint32_t reg, uint32_t val)
 {
-    const char *name = env->spr_cb[reg].name;
+    const char *name = get_spr_name(reg, env);
     uint32_t size = sizeof(env->spr_cb[reg].default_value);
     OperandInfo *oi = load_store_spr_reg(name, val, size, 1);
     qemu_trace_add_operand(oi, 0x2);
@@ -130,7 +153,7 @@ void HELPER(trace_store_mem64)(uint64_t addr, uint64_t val, MemOp op)
 
 void HELPER(trace_load_spr_reg64)(CPUPPCState *env, uint32_t reg, uint64_t val)
 {
-    const char *name = env->spr_cb[reg].name;
+    const char *name = get_spr_name(reg, env);
     uint32_t size = sizeof(env->spr_cb[reg].default_value);
     OperandInfo *oi = load_store_spr_reg(name, val, size, 0);
     qemu_trace_add_operand(oi, 0x1);
@@ -138,7 +161,7 @@ void HELPER(trace_load_spr_reg64)(CPUPPCState *env, uint32_t reg, uint64_t val)
 
 void HELPER(trace_store_spr_reg64)(CPUPPCState *env, uint32_t reg, uint64_t val)
 {
-    const char *name = env->spr_cb[reg].name;
+    const char *name = get_spr_name(reg, env);
     uint32_t size = sizeof(env->spr_cb[reg].default_value);
     OperandInfo *oi = load_store_spr_reg(name, val, size, 1);
     qemu_trace_add_operand(oi, 0x2);
