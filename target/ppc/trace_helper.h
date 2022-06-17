@@ -45,5 +45,6 @@ const char *ppc_not_used_reg_names[] = { "vs0", "vs1", "vs2", "vs3", "vs4", "vs5
 };
 
 OperandInfo *load_store_crf_reg(uint32_t reg, uint64_t val, int ls);
+OperandInfo *load_store_spr_reg(const char *name, uint64_t val, uint32_t size, int ls);
 
 #endif /* TRACE_HELPER */

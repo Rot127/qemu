@@ -202,6 +202,36 @@ static inline void log_store_crf(uint32_t crf) {
     #endif
 }
 
+static inline void log_load_spr(uint32_t spr, TCGv val) {
+    #ifdef HAS_TRACEWRAP
+
+    TCGv_i32 tmp0 = tcg_temp_new_i32();
+    tcg_gen_movi_i32(tmp0, spr);
+    #ifdef TARGET_PPC64
+    gen_helper_trace_load_spr_reg64(cpu_env, tmp0, val);
+    #else
+    gen_helper_trace_load_spr_reg(cpu_env, tmp0, val);
+    #endif
+    tcg_temp_free_i32(tmp0);
+
+    #endif
+}
+
+static inline void log_store_spr(uint32_t spr, TCGv val) {
+    #ifdef HAS_TRACEWRAP
+
+    TCGv_i32 tmp0 = tcg_temp_new_i32();
+    tcg_gen_movi_i32(tmp0, spr);
+    #ifdef TARGET_PPC64
+    gen_helper_trace_store_spr_reg64(cpu_env, tmp0, val);
+    #else
+    gen_helper_trace_store_spr_reg(cpu_env, tmp0, val);
+    #endif
+    tcg_temp_free_i32(tmp0);
+
+    #endif
+}
+
 void ppc_translate_init(void)
 {
     int i;
@@ -349,11 +379,17 @@ struct opc_handler_t {
 static inline void gen_load_spr(TCGv t, int reg)
 {
     tcg_gen_ld_tl(t, cpu_env, offsetof(CPUPPCState, spr[reg]));
+    #ifdef HAS_TRACEWRAP
+    log_load_spr(reg, t);
+    #endif
 }
 
 static inline void gen_store_spr(int reg, TCGv t)
 {
     tcg_gen_st_tl(t, cpu_env, offsetof(CPUPPCState, spr[reg]));
+    #ifdef HAS_TRACEWRAP
+    log_store_spr(reg, t);
+    #endif
 }
 
 static inline void gen_set_access_type(DisasContext *ctx, int access_type)
@@ -581,6 +617,9 @@ void spr_read_xer(DisasContext *ctx, int gprn, int sprn)
         tcg_gen_shli_tl(t0, cpu_ca32, XER_CA32);
         tcg_gen_or_tl(dst, dst, t0);
     }
+    #ifdef HAS_TRACEWRAP
+    log_load_spr(SPR_XER, dst);
+    #endif
     tcg_temp_free(t0);
     tcg_temp_free(t1);
     tcg_temp_free(t2);
@@ -594,6 +633,9 @@ void spr_write_xer(DisasContext *ctx, int sprn, int gprn)
                     ~((1u << XER_SO) |
                       (1u << XER_OV) | (1u << XER_OV32) |
                       (1u << XER_CA) | (1u << XER_CA32)));
+    #ifdef HAS_TRACEWRAP
+    log_store_spr(SPR_XER, cpu_xer);
+    #endif
     tcg_gen_extract_tl(cpu_ov32, src, XER_OV32, 1);
     tcg_gen_extract_tl(cpu_ca32, src, XER_CA32, 1);
     tcg_gen_extract_tl(cpu_so, src, XER_SO, 1);
@@ -605,11 +647,17 @@ void spr_write_xer(DisasContext *ctx, int sprn, int gprn)
 void spr_read_lr(DisasContext *ctx, int gprn, int sprn)
 {
     tcg_gen_mov_tl(cpu_gpr[gprn], cpu_lr);
+    #ifdef HAS_TRACEWRAP
+    log_load_spr(SPR_LR, cpu_lr);
+    #endif
 }
 
 void spr_write_lr(DisasContext *ctx, int sprn, int gprn)
 {
     tcg_gen_mov_tl(cpu_lr, cpu_gpr[gprn]);
+    #ifdef HAS_TRACEWRAP
+    log_store_spr(SPR_LR, cpu_lr);
+    #endif
 }
 
 /* CFAR */
@@ -617,11 +665,17 @@ void spr_write_lr(DisasContext *ctx, int sprn, int gprn)
 void spr_read_cfar(DisasContext *ctx, int gprn, int sprn)
 {
     tcg_gen_mov_tl(cpu_gpr[gprn], cpu_cfar);
+    #ifdef HAS_TRACEWRAP
+    log_load_spr(SPR_CFAR, cpu_cfar);
+    #endif
 }
 
 void spr_write_cfar(DisasContext *ctx, int sprn, int gprn)
 {
     tcg_gen_mov_tl(cpu_cfar, cpu_gpr[gprn]);
+    #ifdef HAS_TRACEWRAP
+    log_store_spr(SPR_CFAR, cpu_cfar);
+    #endif
 }
 #endif /* defined(TARGET_PPC64) && !defined(CONFIG_USER_ONLY) */
 
@@ -629,11 +683,17 @@ void spr_write_cfar(DisasContext *ctx, int sprn, int gprn)
 void spr_read_ctr(DisasContext *ctx, int gprn, int sprn)
 {
     tcg_gen_mov_tl(cpu_gpr[gprn], cpu_ctr);
+    #ifdef HAS_TRACEWRAP
+    log_load_spr(SPR_CTR, cpu_ctr);
+    #endif
 }
 
 void spr_write_ctr(DisasContext *ctx, int sprn, int gprn)
 {
     tcg_gen_mov_tl(cpu_ctr, cpu_gpr[gprn]);
+    #ifdef HAS_TRACEWRAP
+    log_store_spr(SPR_CTR, cpu_ctr);
+    #endif
 }
 
 /* User read access to SPR */
@@ -4483,6 +4543,9 @@ static inline void gen_setlr(DisasContext *ctx, target_ulong nip)
         nip = (uint32_t)nip;
     }
     tcg_gen_movi_tl(cpu_lr, nip);
+    #ifdef HAS_TRACEWRAP
+    log_store_spr(SPR_LR, cpu_lr);
+    #endif
 }
 
 /* b ba bl bla */

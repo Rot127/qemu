@@ -79,6 +79,22 @@ void HELPER(trace_store_crf_reg)(uint32_t crf, uint32_t val)
     qemu_trace_add_operand(oi, 0x2);
 }
 
+void HELPER(trace_load_spr_reg)(CPUPPCState *env, uint32_t reg, uint32_t val)
+{
+    const char *name = env->spr_cb[reg].name;
+    uint32_t size = sizeof(env->spr_cb[reg].default_value);
+    OperandInfo *oi = load_store_spr_reg(name, val, size, 0);
+    qemu_trace_add_operand(oi, 0x1);
+}
+
+void HELPER(trace_store_spr_reg)(CPUPPCState *env, uint32_t reg, uint32_t val)
+{
+    const char *name = env->spr_cb[reg].name;
+    uint32_t size = sizeof(env->spr_cb[reg].default_value);
+    OperandInfo *oi = load_store_spr_reg(name, val, size, 1);
+    qemu_trace_add_operand(oi, 0x2);
+}
+
 void HELPER(trace_mode)(void *mode) { qemu_trace_set_mode(mode); }
 
 #ifdef TARGET_PPC64
@@ -105,6 +121,24 @@ void HELPER(trace_store_mem64)(uint64_t addr, uint64_t val, MemOp op)
     OperandInfo *oi = load_store_mem(addr, 1, &val, memop2size(op));
     qemu_trace_add_operand(oi, 0x2);
 }
+
+void HELPER(trace_load_spr_reg64)(CPUPPCState *env, uint32_t reg, uint64_t val)
+{
+    const char *name = env->spr_cb[reg].name;
+    uint32_t size = sizeof(env->spr_cb[reg].default_value);
+    OperandInfo *oi = load_store_spr_reg(name, val, size, 0);
+    qemu_trace_add_operand(oi, 0x1);
+}
+
+void HELPER(trace_store_spr_reg64)(CPUPPCState *env, uint32_t reg, uint64_t val)
+{
+    const char *name = env->spr_cb[reg].name;
+    uint32_t size = sizeof(env->spr_cb[reg].default_value);
+    OperandInfo *oi = load_store_spr_reg(name, val, size, 1);
+    qemu_trace_add_operand(oi, 0x2);
+}
+
+
 #endif
 
 /*
@@ -190,5 +224,9 @@ OperandInfo *load_store_reg64(uint32_t reg, uint64_t val, int ls) {
 
 OperandInfo *load_store_crf_reg(uint32_t crf, uint64_t val, int ls) {
     const char *name = ppc_crf_reg_names[crf];
-    return build_load_store_reg_op(name, ls, &val, sizeof(val));
+    return build_load_store_reg_op(name, ls, &val, 8);
+}
+
+OperandInfo *load_store_spr_reg(const char *name, uint64_t val, uint32_t size, int ls) {
+    return build_load_store_reg_op(name, ls, &val, size);
 }
