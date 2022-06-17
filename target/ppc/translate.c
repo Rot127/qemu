@@ -134,6 +134,13 @@ static void gen_trace_store_crf_reg(int crf, TCGv_i32 var)
     gen_helper_trace_store_crf_reg(t, var);
     tcg_temp_free_i32(t);
 }
+
+static void gen_trace_load_crf_reg(int crf, TCGv_i32 var)
+{
+    TCGv_i32 t = tcg_const_i32(crf);
+    gen_helper_trace_load_crf_reg(t, var);
+    tcg_temp_free_i32(t);
+}
 #endif /* HAS_TRACEWRAP */
 
 static inline void log_load_mem_i64(TCGv addr, TCGv_i64 val, MemOp op) {
@@ -199,6 +206,12 @@ static inline void log_store_gpr(uint32_t rx) {
 static inline void log_store_crf(uint32_t crf) {
     #ifdef HAS_TRACEWRAP
     gen_trace_store_crf_reg(crf, cpu_crf[crf]);
+    #endif
+}
+
+static inline void log_load_crf(uint32_t crf) {
+    #ifdef HAS_TRACEWRAP
+    gen_trace_load_crf_reg(crf, cpu_crf[crf]);
     #endif
 }
 
@@ -4579,10 +4592,12 @@ static void gen_bcond(DisasContext *ctx, int type)
         target = tcg_temp_local_new();
         if (type == BCOND_CTR) {
             tcg_gen_mov_tl(target, cpu_ctr);
+            log_load_spr(SPR_CTR, cpu_ctr);
         } else if (type == BCOND_TAR) {
             gen_load_spr(target, SPR_TAR);
         } else {
             tcg_gen_mov_tl(target, cpu_lr);
+            log_load_spr(SPR_LR, target);
         }
     } else {
         target = NULL;
@@ -4619,17 +4634,23 @@ static void gen_bcond(DisasContext *ctx, int type)
 
             if (NARROW_MODE(ctx)) {
                 tcg_gen_ext32u_tl(temp, cpu_ctr);
+                log_load_spr(SPR_CTR, cpu_ctr);
             } else {
                 tcg_gen_mov_tl(temp, cpu_ctr);
+                log_load_spr(SPR_CTR, cpu_ctr);
             }
             if (bo & 0x2) {
                 tcg_gen_brcondi_tl(TCG_COND_NE, temp, 0, l1);
             } else {
                 tcg_gen_brcondi_tl(TCG_COND_EQ, temp, 0, l1);
             }
+            log_load_spr(SPR_CTR, cpu_ctr);
             tcg_gen_subi_tl(cpu_ctr, cpu_ctr, 1);
+            log_store_spr(SPR_CTR, cpu_ctr);
         } else {
+            log_load_spr(SPR_CTR, cpu_ctr);
             tcg_gen_subi_tl(cpu_ctr, cpu_ctr, 1);
+            log_store_spr(SPR_CTR, cpu_ctr);
             if (NARROW_MODE(ctx)) {
                 tcg_gen_ext32u_tl(temp, cpu_ctr);
             } else {
@@ -4642,6 +4663,11 @@ static void gen_bcond(DisasContext *ctx, int type)
             }
         }
         tcg_temp_free(temp);
+    } else {
+        // If BO_2 is not set, the CTR is checked.
+        // But the logic is implemented here differently.
+        // So we just log the event.
+        log_load_spr(SPR_CTR, cpu_ctr);
     }
     if ((bo & 0x10) == 0) {
         /* Test CR */
@@ -4651,9 +4677,11 @@ static void gen_bcond(DisasContext *ctx, int type)
 
         if (bo & 0x8) {
             tcg_gen_andi_i32(temp, cpu_crf[bi >> 2], mask);
+            log_load_crf(bi >> 2);
             tcg_gen_brcondi_i32(TCG_COND_EQ, temp, 0, l1);
         } else {
             tcg_gen_andi_i32(temp, cpu_crf[bi >> 2], mask);
+            log_load_crf(bi >> 2);
             tcg_gen_brcondi_i32(TCG_COND_NE, temp, 0, l1);
         }
         tcg_temp_free_i32(temp);

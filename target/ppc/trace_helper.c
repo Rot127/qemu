@@ -106,6 +106,12 @@ void HELPER(trace_store_crf_reg)(uint32_t crf, uint32_t val)
     qemu_trace_add_operand(oi, 0x2);
 }
 
+void HELPER(trace_load_crf_reg)(uint32_t crf, uint32_t val)
+{
+    OperandInfo *oi = load_store_crf_reg(crf, val, 0);
+    qemu_trace_add_operand(oi, 0x1);
+}
+
 void HELPER(trace_load_spr_reg)(CPUPPCState *env, uint32_t reg, uint32_t val)
 {
     const char *name = get_spr_name(reg, env);
