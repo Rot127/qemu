@@ -34,21 +34,21 @@ static bool do_ldst(DisasContext *ctx, int rt, int ra, TCGv displ, bool update,
     }
     gen_set_access_type(ctx, ACCESS_INT);
 
-    log_load_gpr_rx(ra);
+    log_load_gpr(ra);
     ea = do_ea_calc(ctx, ra, displ);
     mop ^= ctx->default_tcg_memop_mask;
     if (store) {
-        log_load_gpr_rx(rt);
+        log_load_gpr(rt);
         log_store_mem(ea, cpu_gpr[rt], mop);
         tcg_gen_qemu_st_tl(cpu_gpr[rt], ea, ctx->mem_idx, mop);
     } else {
         tcg_gen_qemu_ld_tl(cpu_gpr[rt], ea, ctx->mem_idx, mop);
         log_load_mem(ea, cpu_gpr[rt], mop);
-        log_store_gpr_rx(rt);
+        log_store_gpr(rt);
     }
     if (update) {
         tcg_gen_mov_tl(cpu_gpr[ra], ea);
-        log_store_gpr_rx(ra);
+        log_store_gpr(ra);
     }
     tcg_temp_free(ea);
 
@@ -74,7 +74,7 @@ static bool do_ldst_PLS_D(DisasContext *ctx, arg_PLS_D *a, bool update,
 static bool do_ldst_X(DisasContext *ctx, arg_X *a, bool update,
                       bool store, MemOp mop)
 {
-    log_load_gpr_rx(a->rb);
+    log_load_gpr(a->rb);
     return do_ldst(ctx, a->rt, a->ra, cpu_gpr[a->rb], update, store, mop);
 }
 
@@ -285,14 +285,14 @@ static bool do_cmp_X(DisasContext *ctx, arg_X_bfl *a, bool s)
                         s ? "" : "L", ctx->cia);
             }
         }
-        log_load_gpr_rx(a->ra);
-        log_load_gpr_rx(a->rb);
+        log_load_gpr(a->ra);
+        log_load_gpr(a->rb);
         gen_op_cmp32(cpu_gpr[a->ra], cpu_gpr[a->rb], s, a->bf);
         return true;
     }
 
-    log_load_gpr_rx(a->ra);
-    log_load_gpr_rx(a->rb);
+    log_load_gpr(a->ra);
+    log_load_gpr(a->rb);
     /* For 64-bit implementations, deal with bit L accordingly. */
     if (a->l) {
         gen_op_cmp(cpu_gpr[a->ra], cpu_gpr[a->rb], s, a->bf);
@@ -327,12 +327,12 @@ static bool do_cmp_D(DisasContext *ctx, arg_D_bf *a, bool s)
                         s ? "I" : "LI", ctx->cia);
             }
         }
-        log_load_gpr_rx(a->ra);
+        log_load_gpr(a->ra);
         gen_op_cmp32(cpu_gpr[a->ra], tcg_constant_tl(a->imm), s, a->bf);
         return true;
     }
 
-    log_load_gpr_rx(a->ra);
+    log_load_gpr(a->ra);
     /* For 64-bit implementations, deal with bit L accordingly. */
     if (a->l) {
         gen_op_cmp(cpu_gpr[a->ra], tcg_constant_tl(a->imm), s, a->bf);
@@ -354,12 +354,12 @@ TRANS(CMPLI, do_cmp_D, false);
 static bool trans_ADDI(DisasContext *ctx, arg_D *a)
 {
     if (a->ra) {
-        log_load_gpr_rx(a->ra);
+        log_load_gpr(a->ra);
         tcg_gen_addi_tl(cpu_gpr[a->rt], cpu_gpr[a->ra], a->si);
-        log_store_gpr_rx(a->rt);
+        log_store_gpr(a->rt);
     } else {
         tcg_gen_movi_tl(cpu_gpr[a->rt], a->si);
-        log_store_gpr_rx(a->rt);
+        log_store_gpr(a->rt);
     }
     return true;
 }
@@ -383,7 +383,7 @@ static bool trans_ADDPCIS(DisasContext *ctx, arg_DX *a)
 {
     REQUIRE_INSNS_FLAGS2(ctx, ISA300);
     tcg_gen_movi_tl(cpu_gpr[a->rt], ctx->base.pc_next + (a->d << 16));
-    log_store_gpr_rx(a->rt);
+    log_store_gpr(a->rt);
     return true;
 }
 

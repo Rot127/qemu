@@ -184,13 +184,13 @@ static inline void log_store_mem(TCGv addr, TCGv val, MemOp op) {
     #endif
 }
 
-static inline void log_load_gpr_rx(uint32_t rx) {
+static inline void log_load_gpr(uint32_t rx) {
     #ifdef HAS_TRACEWRAP
     gen_trace_load_reg(rx, cpu_gpr[rx]);
     #endif
 }
 
-static inline void log_store_gpr_rx(uint32_t rx) {
+static inline void log_store_gpr(uint32_t rx) {
     #ifdef HAS_TRACEWRAP
     gen_trace_store_reg(rx, cpu_gpr[rx]);
     #endif
@@ -1730,11 +1730,11 @@ static void gen_isel(DisasContext *ctx)
 /* cmpb: PowerPC 2.05 specification */
 static void gen_cmpb(DisasContext *ctx)
 {
-    log_load_gpr_rx(rS(ctx->opcode));
-    log_load_gpr_rx(rB(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
+    log_load_gpr(rB(ctx->opcode));
     gen_helper_cmpb(cpu_gpr[rA(ctx->opcode)], cpu_gpr[rS(ctx->opcode)],
                     cpu_gpr[rB(ctx->opcode)]);
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
 }
 
 /***                           Integer arithmetic                          ***/
@@ -1853,26 +1853,26 @@ static inline void gen_op_arith_add(DisasContext *ctx, TCGv ret, TCGv arg1,
 #define GEN_INT_ARITH_ADD(name, opc3, ca, add_ca, compute_ca, compute_ov)     \
 static void glue(gen_, name)(DisasContext *ctx)                               \
 {                                                                             \
-    log_load_gpr_rx(rA(ctx->opcode));                                         \
-    log_load_gpr_rx(rB(ctx->opcode));                                         \
+    log_load_gpr(rA(ctx->opcode));                                         \
+    log_load_gpr(rB(ctx->opcode));                                         \
     gen_op_arith_add(ctx, cpu_gpr[rD(ctx->opcode)],                           \
                      cpu_gpr[rA(ctx->opcode)], cpu_gpr[rB(ctx->opcode)],      \
                      ca, glue(ca, 32),                                        \
                      add_ca, compute_ca, compute_ov, Rc(ctx->opcode));        \
-    log_store_gpr_rx(rD(ctx->opcode));                                        \
+    log_store_gpr(rD(ctx->opcode));                                        \
 }
 /* Add functions with one operand and one immediate */
 #define GEN_INT_ARITH_ADD_CONST(name, opc3, const_val, ca,                    \
                                 add_ca, compute_ca, compute_ov)               \
 static void glue(gen_, name)(DisasContext *ctx)                               \
 {                                                                             \
-    log_load_gpr_rx(rA(ctx->opcode));                                         \
+    log_load_gpr(rA(ctx->opcode));                                         \
     TCGv t0 = tcg_const_tl(const_val);                                        \
     gen_op_arith_add(ctx, cpu_gpr[rD(ctx->opcode)],                           \
                      cpu_gpr[rA(ctx->opcode)], t0,                            \
                      ca, glue(ca, 32),                                        \
                      add_ca, compute_ca, compute_ov, Rc(ctx->opcode));        \
-    log_store_gpr_rx(rD(ctx->opcode));                                        \
+    log_store_gpr(rD(ctx->opcode));                                        \
     tcg_temp_free(t0);                                                        \
 }
 
@@ -1896,12 +1896,12 @@ GEN_INT_ARITH_ADD_CONST(addzeo, 0x16, 0, cpu_ca, 1, 1, 1)
 /* addic  addic.*/
 static inline void gen_op_addic(DisasContext *ctx, bool compute_rc0)
 {
-    log_load_gpr_rx(rA(ctx->opcode));
+    log_load_gpr(rA(ctx->opcode));
     TCGv c = tcg_const_tl(SIMM(ctx->opcode));
     gen_op_arith_add(ctx, cpu_gpr[rD(ctx->opcode)], cpu_gpr[rA(ctx->opcode)],
                      c, cpu_ca, cpu_ca32, 0, 1, 0, compute_rc0);
     tcg_temp_free(c);
-    log_load_gpr_rx(rD(ctx->opcode));
+    log_load_gpr(rD(ctx->opcode));
 }
 
 static void gen_addic(DisasContext *ctx)
@@ -1961,12 +1961,12 @@ static inline void gen_op_arith_divw(DisasContext *ctx, TCGv ret, TCGv arg1,
 #define GEN_INT_ARITH_DIVW(name, opc3, sign, compute_ov)                      \
 static void glue(gen_, name)(DisasContext *ctx)                               \
 {                                                                             \
-    log_load_gpr_rx(rA(ctx->opcode));                                         \
-    log_load_gpr_rx(rB(ctx->opcode));                                         \
+    log_load_gpr(rA(ctx->opcode));                                         \
+    log_load_gpr(rB(ctx->opcode));                                         \
     gen_op_arith_divw(ctx, cpu_gpr[rD(ctx->opcode)],                          \
                      cpu_gpr[rA(ctx->opcode)], cpu_gpr[rB(ctx->opcode)],      \
                      sign, compute_ov);                                       \
-    log_store_gpr_rx(rD(ctx->opcode));                                        \
+    log_store_gpr(rD(ctx->opcode));                                        \
 }
 /* divwu  divwu.  divwuo  divwuo.   */
 GEN_INT_ARITH_DIVW(divwu, 0x0E, 0, 0);
@@ -1979,8 +1979,8 @@ GEN_INT_ARITH_DIVW(divwo, 0x1F, 1, 1);
 #define GEN_DIVE(name, hlpr, compute_ov)                                      \
 static void gen_##name(DisasContext *ctx)                                     \
 {                                                                             \
-    log_load_gpr_rx(rA(ctx->opcode));                                         \
-    log_load_gpr_rx(rB(ctx->opcode));                                         \
+    log_load_gpr(rA(ctx->opcode));                                         \
+    log_load_gpr(rB(ctx->opcode));                                         \
     TCGv_i32 t0 = tcg_const_i32(compute_ov);                                  \
     gen_helper_##hlpr(cpu_gpr[rD(ctx->opcode)], cpu_env,                      \
                      cpu_gpr[rA(ctx->opcode)], cpu_gpr[rB(ctx->opcode)], t0); \
@@ -1988,7 +1988,7 @@ static void gen_##name(DisasContext *ctx)                                     \
     if (unlikely(Rc(ctx->opcode) != 0)) {                                     \
         gen_set_Rc0(ctx, cpu_gpr[rD(ctx->opcode)]);                           \
     }                                                                         \
-    log_store_gpr_rx(rD(ctx->opcode));                                        \
+    log_store_gpr(rD(ctx->opcode));                                        \
 }
 
 GEN_DIVE(divweu, divweu, 0);
@@ -2042,12 +2042,12 @@ static inline void gen_op_arith_divd(DisasContext *ctx, TCGv ret, TCGv arg1,
 #define GEN_INT_ARITH_DIVD(name, opc3, sign, compute_ov)                      \
 static void glue(gen_, name)(DisasContext *ctx)                               \
 {                                                                             \
-    log_load_gpr_rx(rA(ctx->opcode));                                         \
-    log_load_gpr_rx(rB(ctx->opcode));                                         \
+    log_load_gpr(rA(ctx->opcode));                                         \
+    log_load_gpr(rB(ctx->opcode));                                         \
     gen_op_arith_divd(ctx, cpu_gpr[rD(ctx->opcode)],                          \
                       cpu_gpr[rA(ctx->opcode)], cpu_gpr[rB(ctx->opcode)],     \
                       sign, compute_ov);                                      \
-    log_store_gpr_rx(rD(ctx->opcode));                                        \
+    log_store_gpr(rD(ctx->opcode));                                        \
 }
 /* divdu  divdu.  divduo  divduo.   */
 GEN_INT_ARITH_DIVD(divdu, 0x0E, 0, 0);
@@ -2100,12 +2100,12 @@ static inline void gen_op_arith_modw(DisasContext *ctx, TCGv ret, TCGv arg1,
 #define GEN_INT_ARITH_MODW(name, opc3, sign)                                \
 static void glue(gen_, name)(DisasContext *ctx)                             \
 {                                                                           \
-    log_load_gpr_rx(rA(ctx->opcode));                                         \
-    log_load_gpr_rx(rB(ctx->opcode));                                         \
+    log_load_gpr(rA(ctx->opcode));                                         \
+    log_load_gpr(rB(ctx->opcode));                                         \
     gen_op_arith_modw(ctx, cpu_gpr[rD(ctx->opcode)],                        \
                       cpu_gpr[rA(ctx->opcode)], cpu_gpr[rB(ctx->opcode)],   \
                       sign);                                                \
-    log_store_gpr_rx(rD(ctx->opcode));                                        \
+    log_store_gpr(rD(ctx->opcode));                                        \
 }
 
 GEN_INT_ARITH_MODW(moduw, 0x08, 0);
@@ -2148,12 +2148,12 @@ static inline void gen_op_arith_modd(DisasContext *ctx, TCGv ret, TCGv arg1,
 #define GEN_INT_ARITH_MODD(name, opc3, sign)                            \
 static void glue(gen_, name)(DisasContext *ctx)                           \
 {                                                                         \
-  log_load_gpr_rx(rA(ctx->opcode));                                         \
-  log_load_gpr_rx(rB(ctx->opcode));                                         \
+  log_load_gpr(rA(ctx->opcode));                                         \
+  log_load_gpr(rB(ctx->opcode));                                         \
   gen_op_arith_modd(ctx, cpu_gpr[rD(ctx->opcode)],                        \
                     cpu_gpr[rA(ctx->opcode)], cpu_gpr[rB(ctx->opcode)],   \
                     sign);                                                \
-  log_store_gpr_rx(rD(ctx->opcode));                                        \
+  log_store_gpr(rD(ctx->opcode));                                        \
 }
 
 GEN_INT_ARITH_MODD(modud, 0x08, 0);
@@ -2165,8 +2165,8 @@ static void gen_mulhw(DisasContext *ctx)
 {
     TCGv_i32 t0 = tcg_temp_new_i32();
     TCGv_i32 t1 = tcg_temp_new_i32();
-    log_load_gpr_rx(rA(ctx->opcode));
-    log_load_gpr_rx(rB(ctx->opcode));
+    log_load_gpr(rA(ctx->opcode));
+    log_load_gpr(rB(ctx->opcode));
     tcg_gen_trunc_tl_i32(t0, cpu_gpr[rA(ctx->opcode)]);
     tcg_gen_trunc_tl_i32(t1, cpu_gpr[rB(ctx->opcode)]);
     tcg_gen_muls2_i32(t0, t1, t0, t1);
@@ -2176,7 +2176,7 @@ static void gen_mulhw(DisasContext *ctx)
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rD(ctx->opcode)]);
     }
-    log_store_gpr_rx(rD(ctx->opcode));
+    log_store_gpr(rD(ctx->opcode));
 }
 
 /* mulhwu  mulhwu.  */
@@ -2185,8 +2185,8 @@ static void gen_mulhwu(DisasContext *ctx)
     TCGv_i32 t0 = tcg_temp_new_i32();
     TCGv_i32 t1 = tcg_temp_new_i32();
 
-    log_load_gpr_rx(rA(ctx->opcode));
-    log_load_gpr_rx(rB(ctx->opcode));
+    log_load_gpr(rA(ctx->opcode));
+    log_load_gpr(rB(ctx->opcode));
     tcg_gen_trunc_tl_i32(t0, cpu_gpr[rA(ctx->opcode)]);
     tcg_gen_trunc_tl_i32(t1, cpu_gpr[rB(ctx->opcode)]);
     tcg_gen_mulu2_i32(t0, t1, t0, t1);
@@ -2196,14 +2196,14 @@ static void gen_mulhwu(DisasContext *ctx)
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rD(ctx->opcode)]);
     }
-    log_store_gpr_rx(rD(ctx->opcode));
+    log_store_gpr(rD(ctx->opcode));
 }
 
 /* mullw  mullw. */
 static void gen_mullw(DisasContext *ctx)
 {
-    log_load_gpr_rx(rA(ctx->opcode));
-    log_load_gpr_rx(rB(ctx->opcode));
+    log_load_gpr(rA(ctx->opcode));
+    log_load_gpr(rB(ctx->opcode));
 #if defined(TARGET_PPC64)
     TCGv_i64 t0, t1;
     t0 = tcg_temp_new_i64();
@@ -2220,7 +2220,7 @@ static void gen_mullw(DisasContext *ctx)
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rD(ctx->opcode)]);
     }
-    log_store_gpr_rx(rD(ctx->opcode));
+    log_store_gpr(rD(ctx->opcode));
 }
 
 /* mullwo  mullwo. */
@@ -2228,8 +2228,8 @@ static void gen_mullwo(DisasContext *ctx)
 {
     TCGv_i32 t0 = tcg_temp_new_i32();
     TCGv_i32 t1 = tcg_temp_new_i32();
-    log_load_gpr_rx(rA(ctx->opcode));
-    log_load_gpr_rx(rB(ctx->opcode));
+    log_load_gpr(rA(ctx->opcode));
+    log_load_gpr(rB(ctx->opcode));
     tcg_gen_trunc_tl_i32(t0, cpu_gpr[rA(ctx->opcode)]);
     tcg_gen_trunc_tl_i32(t1, cpu_gpr[rB(ctx->opcode)]);
     tcg_gen_muls2_i32(t0, t1, t0, t1);
@@ -2252,39 +2252,39 @@ static void gen_mullwo(DisasContext *ctx)
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rD(ctx->opcode)]);
     }
-    log_store_gpr_rx(rD(ctx->opcode));
+    log_store_gpr(rD(ctx->opcode));
 }
 
 /* mulli */
 static void gen_mulli(DisasContext *ctx)
 {
-    log_load_gpr_rx(rA(ctx->opcode));
+    log_load_gpr(rA(ctx->opcode));
     tcg_gen_muli_tl(cpu_gpr[rD(ctx->opcode)], cpu_gpr[rA(ctx->opcode)],
                     SIMM(ctx->opcode));
-    log_store_gpr_rx(rD(ctx->opcode));
+    log_store_gpr(rD(ctx->opcode));
 }
 
 #if defined(TARGET_PPC64)
 /* mulhd  mulhd. */
 static void gen_mulhd(DisasContext *ctx)
 {
-    log_load_gpr_rx(rA(ctx->opcode));
-    log_load_gpr_rx(rB(ctx->opcode));
+    log_load_gpr(rA(ctx->opcode));
+    log_load_gpr(rB(ctx->opcode));
     TCGv lo = tcg_temp_new();
     tcg_gen_muls2_tl(lo, cpu_gpr[rD(ctx->opcode)],
                      cpu_gpr[rA(ctx->opcode)], cpu_gpr[rB(ctx->opcode)]);
     tcg_temp_free(lo);
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rD(ctx->opcode)]);
-    log_store_gpr_rx(rD(ctx->opcode));
+    log_store_gpr(rD(ctx->opcode));
     }
 }
 
 /* mulhdu  mulhdu. */
 static void gen_mulhdu(DisasContext *ctx)
 {
-    log_load_gpr_rx(rA(ctx->opcode));
-    log_load_gpr_rx(rB(ctx->opcode));
+    log_load_gpr(rA(ctx->opcode));
+    log_load_gpr(rB(ctx->opcode));
     TCGv lo = tcg_temp_new();
     tcg_gen_mulu2_tl(lo, cpu_gpr[rD(ctx->opcode)],
                      cpu_gpr[rA(ctx->opcode)], cpu_gpr[rB(ctx->opcode)]);
@@ -2292,20 +2292,20 @@ static void gen_mulhdu(DisasContext *ctx)
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rD(ctx->opcode)]);
     }
-    log_store_gpr_rx(rD(ctx->opcode));
+    log_store_gpr(rD(ctx->opcode));
 }
 
 /* mulld  mulld. */
 static void gen_mulld(DisasContext *ctx)
 {
-    log_load_gpr_rx(rA(ctx->opcode));
-    log_load_gpr_rx(rB(ctx->opcode));
+    log_load_gpr(rA(ctx->opcode));
+    log_load_gpr(rB(ctx->opcode));
     tcg_gen_mul_tl(cpu_gpr[rD(ctx->opcode)], cpu_gpr[rA(ctx->opcode)],
                    cpu_gpr[rB(ctx->opcode)]);
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rD(ctx->opcode)]);
     }
-    log_store_gpr_rx(rD(ctx->opcode));
+    log_store_gpr(rD(ctx->opcode));
 }
 
 /* mulldo  mulldo. */
@@ -2313,8 +2313,8 @@ static void gen_mulldo(DisasContext *ctx)
 {
     TCGv_i64 t0 = tcg_temp_new_i64();
     TCGv_i64 t1 = tcg_temp_new_i64();
-    log_load_gpr_rx(rA(ctx->opcode));
-    log_load_gpr_rx(rB(ctx->opcode));
+    log_load_gpr(rA(ctx->opcode));
+    log_load_gpr(rB(ctx->opcode));
     tcg_gen_muls2_i64(t0, t1, cpu_gpr[rA(ctx->opcode)],
                       cpu_gpr[rB(ctx->opcode)]);
     tcg_gen_mov_i64(cpu_gpr[rD(ctx->opcode)], t0);
@@ -2332,7 +2332,7 @@ static void gen_mulldo(DisasContext *ctx)
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rD(ctx->opcode)]);
     }
-    log_store_gpr_rx(rD(ctx->opcode));
+    log_store_gpr(rD(ctx->opcode));
 }
 #endif
 
@@ -2414,25 +2414,25 @@ static inline void gen_op_arith_subf(DisasContext *ctx, TCGv ret, TCGv arg1,
 #define GEN_INT_ARITH_SUBF(name, opc3, add_ca, compute_ca, compute_ov)        \
 static void glue(gen_, name)(DisasContext *ctx)                               \
 {                                                                             \
-    log_load_gpr_rx(rA(ctx->opcode));                                         \
-    log_load_gpr_rx(rB(ctx->opcode));                                         \
+    log_load_gpr(rA(ctx->opcode));                                         \
+    log_load_gpr(rB(ctx->opcode));                                         \
     gen_op_arith_subf(ctx, cpu_gpr[rD(ctx->opcode)],                          \
                       cpu_gpr[rA(ctx->opcode)], cpu_gpr[rB(ctx->opcode)],     \
                       add_ca, compute_ca, compute_ov, Rc(ctx->opcode));       \
-    log_store_gpr_rx(rD(ctx->opcode));                                        \
+    log_store_gpr(rD(ctx->opcode));                                        \
 }
 /* Sub functions with one operand and one immediate */
 #define GEN_INT_ARITH_SUBF_CONST(name, opc3, const_val,                       \
                                 add_ca, compute_ca, compute_ov)               \
 static void glue(gen_, name)(DisasContext *ctx)                               \
 {                                                                             \
-    log_load_gpr_rx(rA(ctx->opcode));                                         \
+    log_load_gpr(rA(ctx->opcode));                                         \
     TCGv t0 = tcg_const_tl(const_val);                                        \
     gen_op_arith_subf(ctx, cpu_gpr[rD(ctx->opcode)],                          \
                       cpu_gpr[rA(ctx->opcode)], t0,                           \
                       add_ca, compute_ca, compute_ov, Rc(ctx->opcode));       \
     tcg_temp_free(t0);                                                        \
-    log_store_gpr_rx(rD(ctx->opcode));                                        \
+    log_store_gpr(rD(ctx->opcode));                                        \
 }
 /* subf  subf.  subfo  subfo. */
 GEN_INT_ARITH_SUBF(subf, 0x01, 0, 0, 0)
@@ -2453,33 +2453,33 @@ GEN_INT_ARITH_SUBF_CONST(subfzeo, 0x16, 0, 1, 1, 1)
 /* subfic */
 static void gen_subfic(DisasContext *ctx)
 {
-    log_load_gpr_rx(rA(ctx->opcode));
+    log_load_gpr(rA(ctx->opcode));
     TCGv c = tcg_const_tl(SIMM(ctx->opcode));
     gen_op_arith_subf(ctx, cpu_gpr[rD(ctx->opcode)], cpu_gpr[rA(ctx->opcode)],
                       c, 0, 1, 0, 0);
     tcg_temp_free(c);
-    log_store_gpr_rx(rD(ctx->opcode));
+    log_store_gpr(rD(ctx->opcode));
 }
 
 /* neg neg. nego nego. */
 static inline void gen_op_arith_neg(DisasContext *ctx, bool compute_ov)
 {
-    log_load_gpr_rx(rA(ctx->opcode));
+    log_load_gpr(rA(ctx->opcode));
     TCGv zero = tcg_const_tl(0);
     gen_op_arith_subf(ctx, cpu_gpr[rD(ctx->opcode)], cpu_gpr[rA(ctx->opcode)],
                       zero, 0, 0, compute_ov, Rc(ctx->opcode));
     tcg_temp_free(zero);
-    log_store_gpr_rx(rD(ctx->opcode));
+    log_store_gpr(rD(ctx->opcode));
 }
 
 static void gen_neg(DisasContext *ctx)
 {
-    log_load_gpr_rx(rA(ctx->opcode));
+    log_load_gpr(rA(ctx->opcode));
     tcg_gen_neg_tl(cpu_gpr[rD(ctx->opcode)], cpu_gpr[rA(ctx->opcode)]);
     if (unlikely(Rc(ctx->opcode))) {
         gen_set_Rc0(ctx, cpu_gpr[rD(ctx->opcode)]);
     }
-    log_store_gpr_rx(rD(ctx->opcode));
+    log_store_gpr(rD(ctx->opcode));
 }
 
 static void gen_nego(DisasContext *ctx)
@@ -2491,23 +2491,23 @@ static void gen_nego(DisasContext *ctx)
 #define GEN_LOGICAL2(name, tcg_op, opc, type)                                 \
 static void glue(gen_, name)(DisasContext *ctx)                               \
 {                                                                             \
-    log_load_gpr_rx(rS(ctx->opcode));                                         \
-    log_load_gpr_rx(rB(ctx->opcode));                                         \
+    log_load_gpr(rS(ctx->opcode));                                         \
+    log_load_gpr(rB(ctx->opcode));                                         \
     tcg_op(cpu_gpr[rA(ctx->opcode)], cpu_gpr[rS(ctx->opcode)],                \
        cpu_gpr[rB(ctx->opcode)]);                                             \
     if (unlikely(Rc(ctx->opcode) != 0))                                       \
         gen_set_Rc0(ctx, cpu_gpr[rA(ctx->opcode)]);                           \
-    log_store_gpr_rx(rA(ctx->opcode));                                        \
+    log_store_gpr(rA(ctx->opcode));                                        \
 }
 
 #define GEN_LOGICAL1(name, tcg_op, opc, type)                                 \
 static void glue(gen_, name)(DisasContext *ctx)                               \
 {                                                                             \
-    log_load_gpr_rx(rS(ctx->opcode));                                         \
+    log_load_gpr(rS(ctx->opcode));                                         \
     tcg_op(cpu_gpr[rA(ctx->opcode)], cpu_gpr[rS(ctx->opcode)]);               \
     if (unlikely(Rc(ctx->opcode) != 0))                                       \
         gen_set_Rc0(ctx, cpu_gpr[rA(ctx->opcode)]);                           \
-    log_store_gpr_rx(rA(ctx->opcode));                                        \
+    log_store_gpr(rA(ctx->opcode));                                        \
 }
 
 /* and & and. */
@@ -2518,21 +2518,21 @@ GEN_LOGICAL2(andc, tcg_gen_andc_tl, 0x01, PPC_INTEGER);
 /* andi. */
 static void gen_andi_(DisasContext *ctx)
 {
-    log_load_gpr_rx(rS(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
     tcg_gen_andi_tl(cpu_gpr[rA(ctx->opcode)], cpu_gpr[rS(ctx->opcode)],
                     UIMM(ctx->opcode));
     gen_set_Rc0(ctx, cpu_gpr[rA(ctx->opcode)]);
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
 }
 
 /* andis. */
 static void gen_andis_(DisasContext *ctx)
 {
-    log_load_gpr_rx(rS(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
     tcg_gen_andi_tl(cpu_gpr[rA(ctx->opcode)], cpu_gpr[rS(ctx->opcode)],
                     UIMM(ctx->opcode) << 16);
     gen_set_Rc0(ctx, cpu_gpr[rA(ctx->opcode)]);
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
 }
 
 /* cntlzw */
@@ -2599,14 +2599,14 @@ static void gen_or(DisasContext *ctx)
     rb = rB(ctx->opcode);
     /* Optimisation for mr. ri case */
     if (rs != ra || rs != rb) {
-        log_load_gpr_rx(rs);
+        log_load_gpr(rs);
         if (rs != rb) {
-            log_load_gpr_rx(rb);
+            log_load_gpr(rb);
             tcg_gen_or_tl(cpu_gpr[ra], cpu_gpr[rs], cpu_gpr[rb]);
         } else {
             tcg_gen_mov_tl(cpu_gpr[ra], cpu_gpr[rs]);
         }
-        log_store_gpr_rx(ra);
+        log_store_gpr(ra);
         if (unlikely(Rc(ctx->opcode) != 0)) {
             gen_set_Rc0(ctx, cpu_gpr[ra]);
         }
@@ -2686,14 +2686,14 @@ static void gen_xor(DisasContext *ctx)
 {
     /* Optimisation for "set to zero" case */
     if (rS(ctx->opcode) != rB(ctx->opcode)) {
-        log_load_gpr_rx(rS(ctx->opcode));
-        log_load_gpr_rx(rB(ctx->opcode));
+        log_load_gpr(rS(ctx->opcode));
+        log_load_gpr(rB(ctx->opcode));
         tcg_gen_xor_tl(cpu_gpr[rA(ctx->opcode)], cpu_gpr[rS(ctx->opcode)],
                        cpu_gpr[rB(ctx->opcode)]);
     } else {
         tcg_gen_movi_tl(cpu_gpr[rA(ctx->opcode)], 0);
     }
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rA(ctx->opcode)]);
     }
@@ -2719,10 +2719,10 @@ static void gen_oris(DisasContext *ctx)
         /* NOP */
         return;
     }
-    log_load_gpr_rx(rS(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
     tcg_gen_ori_tl(cpu_gpr[rA(ctx->opcode)], cpu_gpr[rS(ctx->opcode)],
                    uimm << 16);
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
 }
 
 /* xori */
@@ -2734,9 +2734,9 @@ static void gen_xori(DisasContext *ctx)
         /* NOP */
         return;
     }
-    log_load_gpr_rx(rS(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
     tcg_gen_xori_tl(cpu_gpr[rA(ctx->opcode)], cpu_gpr[rS(ctx->opcode)], uimm);
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
 }
 
 /* xoris */
@@ -2748,45 +2748,45 @@ static void gen_xoris(DisasContext *ctx)
         /* NOP */
         return;
     }
-    log_load_gpr_rx(rS(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
     tcg_gen_xori_tl(cpu_gpr[rA(ctx->opcode)], cpu_gpr[rS(ctx->opcode)],
                     uimm << 16);
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
 }
 
 /* popcntb : PowerPC 2.03 specification */
 static void gen_popcntb(DisasContext *ctx)
 {
-    log_load_gpr_rx(rS(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
     gen_helper_popcntb(cpu_gpr[rA(ctx->opcode)], cpu_gpr[rS(ctx->opcode)]);
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
 }
 
 static void gen_popcntw(DisasContext *ctx)
 {
-    log_load_gpr_rx(rS(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
 #if defined(TARGET_PPC64)
     gen_helper_popcntw(cpu_gpr[rA(ctx->opcode)], cpu_gpr[rS(ctx->opcode)]);
 #else
     tcg_gen_ctpop_i32(cpu_gpr[rA(ctx->opcode)], cpu_gpr[rS(ctx->opcode)]);
 #endif
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
 }
 
 #if defined(TARGET_PPC64)
 /* popcntd: PowerPC 2.06 specification */
 static void gen_popcntd(DisasContext *ctx)
 {
-    log_load_gpr_rx(rS(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
     tcg_gen_ctpop_i64(cpu_gpr[rA(ctx->opcode)], cpu_gpr[rS(ctx->opcode)]);
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
 }
 #endif
 
 /* prtyw: PowerPC 2.05 specification */
 static void gen_prtyw(DisasContext *ctx)
 {
-    log_load_gpr_rx(rS(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
     TCGv ra = cpu_gpr[rA(ctx->opcode)];
     TCGv rs = cpu_gpr[rS(ctx->opcode)];
     TCGv t0 = tcg_temp_new();
@@ -2796,14 +2796,14 @@ static void gen_prtyw(DisasContext *ctx)
     tcg_gen_xor_tl(ra, ra, t0);
     tcg_gen_andi_tl(ra, ra, (target_ulong)0x100000001ULL);
     tcg_temp_free(t0);
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
 }
 
 #if defined(TARGET_PPC64)
 /* prtyd: PowerPC 2.05 specification */
 static void gen_prtyd(DisasContext *ctx)
 {
-    log_load_gpr_rx(rS(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
     TCGv ra = cpu_gpr[rA(ctx->opcode)];
     TCGv rs = cpu_gpr[rS(ctx->opcode)];
     TCGv t0 = tcg_temp_new();
@@ -2815,7 +2815,7 @@ static void gen_prtyd(DisasContext *ctx)
     tcg_gen_xor_tl(ra, ra, t0);
     tcg_gen_andi_tl(ra, ra, 1);
     tcg_temp_free(t0);
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
 }
 #endif
 
@@ -2823,11 +2823,11 @@ static void gen_prtyd(DisasContext *ctx)
 /* bpermd */
 static void gen_bpermd(DisasContext *ctx)
 {
-    log_load_gpr_rx(rS(ctx->opcode));
-    log_load_gpr_rx(rB(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
+    log_load_gpr(rB(ctx->opcode));
     gen_helper_bpermd(cpu_gpr[rA(ctx->opcode)],
                       cpu_gpr[rS(ctx->opcode)], cpu_gpr[rB(ctx->opcode)]);
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
 }
 #endif
 
@@ -2838,9 +2838,9 @@ GEN_LOGICAL1(extsw, tcg_gen_ext32s_tl, 0x1E, PPC_64B);
 /* cntlzd */
 static void gen_cntlzd(DisasContext *ctx)
 {
-    log_load_gpr_rx(rS(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
     tcg_gen_clzi_i64(cpu_gpr[rA(ctx->opcode)], cpu_gpr[rS(ctx->opcode)], 64);
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rA(ctx->opcode)]);
     }
@@ -2849,9 +2849,9 @@ static void gen_cntlzd(DisasContext *ctx)
 /* cnttzd */
 static void gen_cnttzd(DisasContext *ctx)
 {
-    log_load_gpr_rx(rS(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
     tcg_gen_ctzi_i64(cpu_gpr[rA(ctx->opcode)], cpu_gpr[rS(ctx->opcode)], 64);
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rA(ctx->opcode)]);
     }
@@ -2873,7 +2873,7 @@ static void gen_darn(DisasContext *ctx)
             gen_helper_darn64(cpu_gpr[rD(ctx->opcode)]);
         }
     }
-    log_store_gpr_rx(rD(ctx->opcode));
+    log_store_gpr(rD(ctx->opcode));
 }
 #endif
 
@@ -2882,7 +2882,7 @@ static void gen_darn(DisasContext *ctx)
 /* rlwimi & rlwimi. */
 static void gen_rlwimi(DisasContext *ctx)
 {
-    log_load_gpr_rx(rS(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
     TCGv t_ra = cpu_gpr[rA(ctx->opcode)];
     TCGv t_rs = cpu_gpr[rS(ctx->opcode)];
     uint32_t sh = SH(ctx->opcode);
@@ -2928,7 +2928,7 @@ static void gen_rlwimi(DisasContext *ctx)
         tcg_gen_or_tl(t_ra, t_ra, t1);
         tcg_temp_free(t1);
     }
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, t_ra);
     }
@@ -2937,7 +2937,7 @@ static void gen_rlwimi(DisasContext *ctx)
 /* rlwinm & rlwinm. */
 static void gen_rlwinm(DisasContext *ctx)
 {
-    log_load_gpr_rx(rS(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
     TCGv t_ra = cpu_gpr[rA(ctx->opcode)];
     TCGv t_rs = cpu_gpr[rS(ctx->opcode)];
     int sh = SH(ctx->opcode);
@@ -2984,7 +2984,7 @@ static void gen_rlwinm(DisasContext *ctx)
 #endif
         }
     }
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, t_ra);
     }
@@ -2993,8 +2993,8 @@ static void gen_rlwinm(DisasContext *ctx)
 /* rlwnm & rlwnm. */
 static void gen_rlwnm(DisasContext *ctx)
 {
-    log_load_gpr_rx(rS(ctx->opcode));
-    log_load_gpr_rx(rB(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
+    log_load_gpr(rB(ctx->opcode));
     TCGv t_ra = cpu_gpr[rA(ctx->opcode)];
     TCGv t_rs = cpu_gpr[rS(ctx->opcode)];
     TCGv t_rb = cpu_gpr[rB(ctx->opcode)];
@@ -3038,7 +3038,7 @@ static void gen_rlwnm(DisasContext *ctx)
 
     tcg_gen_andi_tl(t_ra, t_ra, mask);
 
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, t_ra);
     }
@@ -3078,7 +3078,7 @@ static void glue(gen_, name##3)(DisasContext *ctx)                            \
 
 static void gen_rldinm(DisasContext *ctx, int mb, int me, int sh)
 {
-    log_load_gpr_rx(rS(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
     TCGv t_ra = cpu_gpr[rA(ctx->opcode)];
     TCGv t_rs = cpu_gpr[rS(ctx->opcode)];
     int len = me - mb + 1;
@@ -3092,7 +3092,7 @@ static void gen_rldinm(DisasContext *ctx, int mb, int me, int sh)
         tcg_gen_rotli_tl(t_ra, t_rs, sh);
         tcg_gen_andi_tl(t_ra, t_ra, MASK(mb, me));
     }
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, t_ra);
     }
@@ -3133,8 +3133,8 @@ GEN_PPC64_R4(rldic, 0x1E, 0x04);
 
 static void gen_rldnm(DisasContext *ctx, int mb, int me)
 {
-    log_load_gpr_rx(rS(ctx->opcode));
-    log_load_gpr_rx(rB(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
+    log_load_gpr(rB(ctx->opcode));
     TCGv t_ra = cpu_gpr[rA(ctx->opcode)];
     TCGv t_rs = cpu_gpr[rS(ctx->opcode)];
     TCGv t_rb = cpu_gpr[rB(ctx->opcode)];
@@ -3146,7 +3146,7 @@ static void gen_rldnm(DisasContext *ctx, int mb, int me)
     tcg_temp_free(t0);
 
     tcg_gen_andi_tl(t_ra, t_ra, MASK(mb, me));
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, t_ra);
     }
@@ -3175,7 +3175,7 @@ GEN_PPC64_R2(rldcr, 0x1E, 0x09);
 /* rldimi - rldimi. */
 static void gen_rldimi(DisasContext *ctx, int mbn, int shn)
 {
-    log_load_gpr_rx(rS(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
     TCGv t_ra = cpu_gpr[rA(ctx->opcode)];
     TCGv t_rs = cpu_gpr[rS(ctx->opcode)];
     uint32_t sh = SH(ctx->opcode) | (shn << 5);
@@ -3194,7 +3194,7 @@ static void gen_rldimi(DisasContext *ctx, int mbn, int shn)
         tcg_gen_or_tl(t_ra, t_ra, t1);
         tcg_temp_free(t1);
     }
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, t_ra);
     }
@@ -3208,8 +3208,8 @@ GEN_PPC64_R4(rldimi, 0x1E, 0x06);
 static void gen_slw(DisasContext *ctx)
 {
     TCGv t0, t1;
-    log_load_gpr_rx(rS(ctx->opcode));
-    log_load_gpr_rx(rB(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
+    log_load_gpr(rB(ctx->opcode));
 
     t0 = tcg_temp_new();
     /* AND rS with a mask that is 0 when rB >= 0x20 */
@@ -3227,7 +3227,7 @@ static void gen_slw(DisasContext *ctx)
     tcg_temp_free(t1);
     tcg_temp_free(t0);
     tcg_gen_ext32u_tl(cpu_gpr[rA(ctx->opcode)], cpu_gpr[rA(ctx->opcode)]);
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rA(ctx->opcode)]);
     }
@@ -3236,11 +3236,11 @@ static void gen_slw(DisasContext *ctx)
 /* sraw & sraw. */
 static void gen_sraw(DisasContext *ctx)
 {
-    log_load_gpr_rx(rS(ctx->opcode));
-    log_load_gpr_rx(rB(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
+    log_load_gpr(rB(ctx->opcode));
     gen_helper_sraw(cpu_gpr[rA(ctx->opcode)], cpu_env,
                     cpu_gpr[rS(ctx->opcode)], cpu_gpr[rB(ctx->opcode)]);
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rA(ctx->opcode)]);
     }
@@ -3249,7 +3249,7 @@ static void gen_sraw(DisasContext *ctx)
 /* srawi & srawi. */
 static void gen_srawi(DisasContext *ctx)
 {
-    log_load_gpr_rx(rS(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
     int sh = SH(ctx->opcode);
     TCGv dst = cpu_gpr[rA(ctx->opcode)];
     TCGv src = cpu_gpr[rS(ctx->opcode)];
@@ -3273,7 +3273,7 @@ static void gen_srawi(DisasContext *ctx)
         }
         tcg_gen_sari_tl(dst, dst, sh);
     }
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, dst);
     }
@@ -3284,8 +3284,8 @@ static void gen_srw(DisasContext *ctx)
 {
     TCGv t0, t1;
 
-    log_load_gpr_rx(rS(ctx->opcode));
-    log_load_gpr_rx(rB(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
+    log_load_gpr(rB(ctx->opcode));
     t0 = tcg_temp_new();
     /* AND rS with a mask that is 0 when rB >= 0x20 */
 #if defined(TARGET_PPC64)
@@ -3302,7 +3302,7 @@ static void gen_srw(DisasContext *ctx)
     tcg_gen_shr_tl(cpu_gpr[rA(ctx->opcode)], t0, t1);
     tcg_temp_free(t1);
     tcg_temp_free(t0);
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rA(ctx->opcode)]);
     }
@@ -3314,8 +3314,8 @@ static void gen_sld(DisasContext *ctx)
 {
     TCGv t0, t1;
 
-    log_load_gpr_rx(rS(ctx->opcode));
-    log_load_gpr_rx(rB(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
+    log_load_gpr(rB(ctx->opcode));
     t0 = tcg_temp_new();
     /* AND rS with a mask that is 0 when rB >= 0x40 */
     tcg_gen_shli_tl(t0, cpu_gpr[rB(ctx->opcode)], 0x39);
@@ -3326,7 +3326,7 @@ static void gen_sld(DisasContext *ctx)
     tcg_gen_shl_tl(cpu_gpr[rA(ctx->opcode)], t0, t1);
     tcg_temp_free(t1);
     tcg_temp_free(t0);
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rA(ctx->opcode)]);
     }
@@ -3335,11 +3335,11 @@ static void gen_sld(DisasContext *ctx)
 /* srad & srad. */
 static void gen_srad(DisasContext *ctx)
 {
-    log_load_gpr_rx(rS(ctx->opcode));
-    log_load_gpr_rx(rB(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
+    log_load_gpr(rB(ctx->opcode));
     gen_helper_srad(cpu_gpr[rA(ctx->opcode)], cpu_env,
                     cpu_gpr[rS(ctx->opcode)], cpu_gpr[rB(ctx->opcode)]);
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rA(ctx->opcode)]);
     }
@@ -3347,7 +3347,7 @@ static void gen_srad(DisasContext *ctx)
 /* sradi & sradi. */
 static inline void gen_sradi(DisasContext *ctx, int n)
 {
-    log_load_gpr_rx(rS(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
     int sh = SH(ctx->opcode) + (n << 5);
     TCGv dst = cpu_gpr[rA(ctx->opcode)];
     TCGv src = cpu_gpr[rS(ctx->opcode)];
@@ -3370,7 +3370,7 @@ static inline void gen_sradi(DisasContext *ctx, int n)
         }
         tcg_gen_sari_tl(dst, src, sh);
     }
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, dst);
     }
@@ -3389,14 +3389,14 @@ static void gen_sradi1(DisasContext *ctx)
 /* extswsli & extswsli. */
 static inline void gen_extswsli(DisasContext *ctx, int n)
 {
-    log_load_gpr_rx(rS(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
     int sh = SH(ctx->opcode) + (n << 5);
     TCGv dst = cpu_gpr[rA(ctx->opcode)];
     TCGv src = cpu_gpr[rS(ctx->opcode)];
 
     tcg_gen_ext32s_tl(dst, src);
     tcg_gen_shli_tl(dst, dst, sh);
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, dst);
     }
@@ -3417,8 +3417,8 @@ static void gen_srd(DisasContext *ctx)
 {
     TCGv t0, t1;
 
-    log_load_gpr_rx(rS(ctx->opcode));
-    log_load_gpr_rx(rB(ctx->opcode));
+    log_load_gpr(rS(ctx->opcode));
+    log_load_gpr(rB(ctx->opcode));
     t0 = tcg_temp_new();
     /* AND rS with a mask that is 0 when rB >= 0x40 */
     tcg_gen_shli_tl(t0, cpu_gpr[rB(ctx->opcode)], 0x39);
@@ -3429,7 +3429,7 @@ static void gen_srd(DisasContext *ctx)
     tcg_gen_shr_tl(cpu_gpr[rA(ctx->opcode)], t0, t1);
     tcg_temp_free(t1);
     tcg_temp_free(t0);
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rA(ctx->opcode)]);
     }
@@ -3461,12 +3461,12 @@ static inline void gen_addr_imm_index(DisasContext *ctx, TCGv EA,
             tcg_gen_mov_tl(EA, cpu_gpr[rA(ctx->opcode)]);
         }
     }
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
 }
 
 static inline void gen_addr_reg_index(DisasContext *ctx, TCGv EA)
 {
-    log_load_gpr_rx(rB(ctx->opcode));
+    log_load_gpr(rB(ctx->opcode));
     if (rA(ctx->opcode) == 0) {
         if (NARROW_MODE(ctx)) {
             tcg_gen_ext32u_tl(EA, cpu_gpr[rB(ctx->opcode)]);
@@ -3479,12 +3479,12 @@ static inline void gen_addr_reg_index(DisasContext *ctx, TCGv EA)
             tcg_gen_ext32u_tl(EA, EA);
         }
     }
-    log_store_gpr_rx(rA(ctx->opcode));
+    log_store_gpr(rA(ctx->opcode));
 }
 
 static inline void gen_addr_register(DisasContext *ctx, TCGv EA)
 {
-    log_load_gpr_rx(rD(ctx->opcode));
+    log_load_gpr(rD(ctx->opcode));
     if (rA(ctx->opcode) == 0) {
         tcg_gen_movi_tl(EA, 0);
     } else if (NARROW_MODE(ctx)) {
@@ -3609,7 +3609,7 @@ static void glue(gen_, name##x)(DisasContext *ctx)                            \
     EA = tcg_temp_new();                                                      \
     gen_addr_reg_index(ctx, EA);                                              \
     gen_qemu_##ldop(ctx, cpu_gpr[rD(ctx->opcode)], EA);                       \
-    log_store_gpr_rx(rD(ctx->opcode));                                        \
+    log_store_gpr(rD(ctx->opcode));                                        \
     tcg_temp_free(EA);                                                        \
 }
 
@@ -3629,7 +3629,7 @@ static void glue(gen_, name##epx)(DisasContext *ctx)                          \
     gen_addr_reg_index(ctx, EA);                                              \
     tcg_gen_qemu_ld_tl(cpu_gpr[rD(ctx->opcode)], EA, PPC_TLB_EPID_LOAD, ldop);\
     log_load_mem(EA, cpu_gpr[rD(ctx->opcode)], ldop);                         \
-    log_store_gpr_rx(rD(ctx->opcode));                                        \
+    log_store_gpr(rD(ctx->opcode));                                        \
     tcg_temp_free(EA);                                                        \
 }
 
@@ -3656,7 +3656,7 @@ static void glue(gen_, name##x)(DisasContext *ctx)                            \
     chk;                                                                      \
     gen_set_access_type(ctx, ACCESS_INT);                                     \
     EA = tcg_temp_new();                                                      \
-    log_load_gpr_rx(rS(ctx->opcode));                                         \
+    log_load_gpr(rS(ctx->opcode));                                         \
     gen_addr_reg_index(ctx, EA);                                              \
     gen_qemu_##stop(ctx, cpu_gpr[rS(ctx->opcode)], EA);                       \
     tcg_temp_free(EA);                                                        \
@@ -3677,7 +3677,7 @@ static void glue(gen_, name##epx)(DisasContext *ctx)                          \
     gen_addr_reg_index(ctx, EA);                                              \
     tcg_gen_qemu_st_tl(                                                       \
         cpu_gpr[rD(ctx->opcode)], EA, PPC_TLB_EPID_STORE, stop);              \
-    log_store_gpr_rx(rD(ctx->opcode));                                        \
+    log_store_gpr(rD(ctx->opcode));                                        \
     tcg_temp_free(EA);                                                        \
 }
 
@@ -5035,7 +5035,7 @@ static inline void gen_op_mfspr(DisasContext *ctx)
     if (likely(read_cb != NULL)) {
         if (likely(read_cb != SPR_NOACCESS)) {
             (*read_cb)(ctx, rD(ctx->opcode), sprn);
-            log_store_gpr_rx(rD(ctx->opcode));
+            log_store_gpr(rD(ctx->opcode));
         } else {
             /* Privilege exception */
             /*
@@ -5227,7 +5227,7 @@ static void gen_mtspr(DisasContext *ctx)
 #endif
     if (likely(write_cb != NULL)) {
         if (likely(write_cb != SPR_NOACCESS)) {
-            log_load_gpr_rx(rS(ctx->opcode));
+            log_load_gpr(rS(ctx->opcode));
             (*write_cb)(ctx, sprn, rS(ctx->opcode));
         } else {
             /* Privilege exception */
