@@ -224,7 +224,7 @@ OperandInfo *load_store_reg64(uint32_t reg, uint64_t val, int ls) {
 
 OperandInfo *load_store_crf_reg(uint32_t crf, uint64_t val, int ls) {
     const char *name = ppc_crf_reg_names[crf];
-    return build_load_store_reg_op(name, ls, &val, 8);
+    return build_load_store_reg_op(name, ls, &val, 1);
 }
 
 OperandInfo *load_store_spr_reg(const char *name, uint64_t val, uint32_t size, int ls) {
