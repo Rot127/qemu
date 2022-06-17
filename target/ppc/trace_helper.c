@@ -39,24 +39,28 @@ void HELPER(trace_endframe)(CPUPPCState *state, uint32_t pc)
 
 void HELPER(trace_load_mem)(uint32_t addr, uint32_t val, MemOp op)
 {
+    qemu_log("LOAD at 0x%lx size: %d data: 0x%lx\n", (unsigned long) addr, memop2size(op), (unsigned long) val);
     OperandInfo *oi = load_store_mem(addr, 0, &val, memop2size(op));
     qemu_trace_add_operand(oi, 0x1);
 }
 
 void HELPER(trace_store_mem)(uint32_t addr, uint32_t val, MemOp op)
 {
+    qemu_log("STORE at 0x%lx size: %d data: 0x%lx\n", (unsigned long) addr, memop2size(op), (unsigned long) val);
     OperandInfo *oi = load_store_mem(addr, 1, &val, memop2size(op));
     qemu_trace_add_operand(oi, 0x2);
 }
 
 void HELPER(trace_load_mem_i64)(uint32_t addr, uint64_t val, MemOp op)
 {
+    qemu_log("LOAD at 0x%lx size: %d data: 0x%llx\n", (unsigned long) addr, memop2size(op), (unsigned long long) val);
     OperandInfo *oi = load_store_mem(addr, 0, &val, memop2size(op));
     qemu_trace_add_operand(oi, 0x1);
 }
 
 void HELPER(trace_store_mem_i64)(uint32_t addr, uint64_t val, MemOp op)
 {
+    qemu_log("STORE at 0x%lx size: %d data: 0x%llx\n", (unsigned long) addr, memop2size(op), (unsigned long long) val);
     OperandInfo *oi = load_store_mem(addr, 1, &val, memop2size(op));
     qemu_trace_add_operand(oi, 0x2);
 }
@@ -112,12 +116,14 @@ void HELPER(trace_store_reg64)(uint32_t reg, uint64_t val)
 
 void HELPER(trace_load_mem64)(uint64_t addr, uint64_t val, MemOp op)
 {
+    qemu_log("LOAD at 0x%llx size: %d data: 0x%llx\n", (unsigned long long) addr, memop2size(op), (unsigned long long) val);
     OperandInfo *oi = load_store_mem(addr, 0, &val, memop2size(op));
     qemu_trace_add_operand(oi, 0x1);
 }
 
 void HELPER(trace_store_mem64)(uint64_t addr, uint64_t val, MemOp op)
 {
+    qemu_log("STORE at 0x%llx size: %d data: 0x%llx\n", (unsigned long long) addr, memop2size(op), (unsigned long long) val);
     OperandInfo *oi = load_store_mem(addr, 1, &val, memop2size(op));
     qemu_trace_add_operand(oi, 0x2);
 }

@@ -4493,6 +4493,9 @@ static inline void gen_update_cfar(DisasContext *ctx, target_ulong nip)
 
 static inline bool use_goto_tb(DisasContext *ctx, target_ulong dest)
 {
+#ifdef HAS_TRACEWRAP
+    gen_trace_endframe(ctx->cia);
+#endif
     return translator_use_goto_tb(&ctx->base, dest);
 }
 
@@ -8822,12 +8825,12 @@ static void ppc_tr_translate_insn(DisasContextBase *dcbase, CPUState *cs)
               ctx->base.pc_next, ctx->mem_idx, (int)msr_ir);
 
     ctx->cia = pc = ctx->base.pc_next;
-    insn = translator_ldl_swap(env, dcbase, pc, need_byteswap(ctx));
-    ctx->base.pc_next = pc += 4;
-
 #ifdef HAS_TRACEWRAP
     gen_trace_newframe(ctx->cia);
 #endif
+
+    insn = translator_ldl_swap(env, dcbase, pc, need_byteswap(ctx));
+    ctx->base.pc_next = pc += 4;
 
     if (!is_prefix_insn(ctx, insn)) {
         ok = (decode_insn32(ctx, insn) ||
