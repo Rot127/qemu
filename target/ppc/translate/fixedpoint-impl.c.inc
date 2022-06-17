@@ -34,9 +34,11 @@ static bool do_ldst(DisasContext *ctx, int rt, int ra, TCGv displ, bool update,
     }
     gen_set_access_type(ctx, ACCESS_INT);
 
+    log_load_gpr_rx(ra);
     ea = do_ea_calc(ctx, ra, displ);
     mop ^= ctx->default_tcg_memop_mask;
     if (store) {
+        log_load_gpr_rx(rt);
         log_store_mem(ea, cpu_gpr[rt], mop);
         tcg_gen_qemu_st_tl(cpu_gpr[rt], ea, ctx->mem_idx, mop);
     } else {
@@ -72,6 +74,7 @@ static bool do_ldst_PLS_D(DisasContext *ctx, arg_PLS_D *a, bool update,
 static bool do_ldst_X(DisasContext *ctx, arg_X *a, bool update,
                       bool store, MemOp mop)
 {
+    log_load_gpr_rx(a->rb);
     return do_ldst(ctx, a->rt, a->ra, cpu_gpr[a->rb], update, store, mop);
 }
 
@@ -282,6 +285,8 @@ static bool do_cmp_X(DisasContext *ctx, arg_X_bfl *a, bool s)
                         s ? "" : "L", ctx->cia);
             }
         }
+        log_load_gpr_rx(a->ra);
+        log_load_gpr_rx(a->rb);
         gen_op_cmp32(cpu_gpr[a->ra], cpu_gpr[a->rb], s, a->bf);
         return true;
     }
