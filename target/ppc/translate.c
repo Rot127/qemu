@@ -1826,6 +1826,7 @@ static inline void gen_op_arith_add(DisasContext *ctx, TCGv ret, TCGv arg1,
     }
 
     if (compute_ca) {
+        log_load_spr(SPR_XER, XER_CA, ca);
         if (NARROW_MODE(ctx)) {
             /*
              * Caution: a non-obvious corner case of the spec is that
@@ -1841,10 +1842,12 @@ static inline void gen_op_arith_add(DisasContext *ctx, TCGv ret, TCGv arg1,
             tcg_gen_xor_tl(ca, t0, t1);        /* bits changed w/ carry */
             tcg_temp_free(t1);
             tcg_gen_extract_tl(ca, ca, 32, 1);
-            log_store_spr(SPR_XER, XER_CA, ca);
             if (is_isa300(ctx)) {
                 tcg_gen_mov_tl(ca32, ca);
             }
+            #ifdef RIZIN_TRACE
+            log_store_spr(SPR_XER, XER_CA32, ca);
+            #endif
         } else {
             TCGv zero = tcg_const_tl(0);
             if (add_ca) {
@@ -1856,9 +1859,11 @@ static inline void gen_op_arith_add(DisasContext *ctx, TCGv ret, TCGv arg1,
             gen_op_arith_compute_ca32(ctx, t0, arg1, arg2, ca32, 0);
             tcg_temp_free(zero);
         }
+        log_store_spr(SPR_XER, XER_CA, ca);
     } else {
         tcg_gen_add_tl(t0, arg1, arg2);
         if (add_ca) {
+            log_load_spr(SPR_XER, XER_CA, ca);
             tcg_gen_add_tl(t0, t0, ca);
         }
     }
@@ -2375,6 +2380,7 @@ static inline void gen_op_arith_subf(DisasContext *ctx, TCGv ret, TCGv arg1,
     }
 
     if (compute_ca) {
+        log_load_spr(SPR_XER, XER_CA, cpu_ca);
         /* dest = ~arg1 + arg2 [+ ca].  */
         if (NARROW_MODE(ctx)) {
             /*
@@ -2386,7 +2392,6 @@ static inline void gen_op_arith_subf(DisasContext *ctx, TCGv ret, TCGv arg1,
             TCGv t1 = tcg_temp_new();
             tcg_gen_not_tl(inv1, arg1);
             if (add_ca) {
-                log_load_spr(SPR_XER, XER_CA, cpu_ca);
                 tcg_gen_add_tl(t0, arg2, cpu_ca);
             } else {
                 tcg_gen_addi_tl(t0, arg2, 1);
@@ -2395,11 +2400,8 @@ static inline void gen_op_arith_subf(DisasContext *ctx, TCGv ret, TCGv arg1,
             tcg_gen_add_tl(t0, t0, inv1);
             tcg_temp_free(inv1);
             tcg_gen_xor_tl(cpu_ca, t0, t1);         /* bits changes w/ carry */
-            log_store_spr(SPR_XER, XER_CA, cpu_ca);
             tcg_temp_free(t1);
-            log_load_spr(SPR_XER, XER_CA, cpu_ca);
             tcg_gen_extract_tl(cpu_ca, cpu_ca, 32, 1);
-            log_store_spr(SPR_XER, XER_CA, cpu_ca);
             if (is_isa300(ctx)) {
                 tcg_gen_mov_tl(cpu_ca32, cpu_ca);
             }
@@ -2418,10 +2420,10 @@ static inline void gen_op_arith_subf(DisasContext *ctx, TCGv ret, TCGv arg1,
             tcg_temp_free(inv1);
         } else {
             tcg_gen_setcond_tl(TCG_COND_GEU, cpu_ca, arg2, arg1);
-            log_store_spr(SPR_XER, XER_CA, cpu_ca);
             tcg_gen_sub_tl(t0, arg2, arg1);
             gen_op_arith_compute_ca32(ctx, t0, arg1, arg2, cpu_ca32, 1);
         }
+        log_store_spr(SPR_XER, XER_CA, cpu_ca);
     } else if (add_ca) {
         /*
          * Since we're ignoring carry-out, we can simplify the
@@ -3288,6 +3290,7 @@ static void gen_sraw(DisasContext *ctx)
 static void gen_srawi(DisasContext *ctx)
 {
     log_load_gpr(rS(ctx->opcode));
+    log_load_spr(SPR_XER, XER_CA, cpu_ca);
     int sh = SH(ctx->opcode);
     TCGv dst = cpu_gpr[rA(ctx->opcode)];
     TCGv src = cpu_gpr[rS(ctx->opcode)];
@@ -3311,6 +3314,10 @@ static void gen_srawi(DisasContext *ctx)
         }
         tcg_gen_sari_tl(dst, dst, sh);
     }
+    #ifdef RIZIN_TRACE
+    log_store_spr(SPR_XER, XER_CA32, cpu_ca);
+    #endif
+    log_store_spr(SPR_XER, XER_CA, cpu_ca);
     log_store_gpr(rA(ctx->opcode));
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, dst);
