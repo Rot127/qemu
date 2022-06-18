@@ -1790,13 +1790,11 @@ static inline void gen_op_arith_compute_ca32(DisasContext *ctx,
                                              TCGv ca32, int sub)
 {
     TCGv t0;
-    #ifdef TARGET_PPC64
-    log_store_spr(XER_CA32, ca32);
-    #endif
-
+    #ifndef RIZIN_TRACE
     if (!is_isa300(ctx)) {
         return;
     }
+    #endif
 
     t0 = tcg_temp_new();
     if (sub) {
@@ -1805,7 +1803,8 @@ static inline void gen_op_arith_compute_ca32(DisasContext *ctx,
         tcg_gen_xor_tl(t0, arg0, arg1);
     }
     tcg_gen_xor_tl(t0, t0, res);
-    tcg_gen_extract_tl(ca32, t0, 32, 1);
+    tcg_gen_extract_tl(ca32, t0, 31, 1);
+    log_store_spr(XER_CA32, ca32);
     tcg_temp_free(t0);
 }
 
@@ -2382,6 +2381,7 @@ static inline void gen_op_arith_subf(DisasContext *ctx, TCGv ret, TCGv arg1,
             TCGv t1 = tcg_temp_new();
             tcg_gen_not_tl(inv1, arg1);
             if (add_ca) {
+                log_load_spr(XER_CA, cpu_ca);
                 tcg_gen_add_tl(t0, arg2, cpu_ca);
             } else {
                 tcg_gen_addi_tl(t0, arg2, 1);
@@ -2390,15 +2390,22 @@ static inline void gen_op_arith_subf(DisasContext *ctx, TCGv ret, TCGv arg1,
             tcg_gen_add_tl(t0, t0, inv1);
             tcg_temp_free(inv1);
             tcg_gen_xor_tl(cpu_ca, t0, t1);         /* bits changes w/ carry */
+            log_store_spr(XER_CA, cpu_ca);
             tcg_temp_free(t1);
+            log_load_spr(XER_CA, cpu_ca);
             tcg_gen_extract_tl(cpu_ca, cpu_ca, 32, 1);
+            log_store_spr(XER_CA, cpu_ca);
             if (is_isa300(ctx)) {
                 tcg_gen_mov_tl(cpu_ca32, cpu_ca);
             }
+            #ifdef RIZIN_TRACE
+            log_store_spr(XER_CA32, cpu_ca);
+            #endif
         } else if (add_ca) {
             TCGv zero, inv1 = tcg_temp_new();
             tcg_gen_not_tl(inv1, arg1);
             zero = tcg_const_tl(0);
+            log_load_spr(XER_CA, cpu_ca);
             tcg_gen_add2_tl(t0, cpu_ca, arg2, zero, cpu_ca, zero);
             tcg_gen_add2_tl(t0, cpu_ca, t0, cpu_ca, inv1, zero);
             gen_op_arith_compute_ca32(ctx, t0, inv1, arg2, cpu_ca32, 0);
@@ -2406,6 +2413,7 @@ static inline void gen_op_arith_subf(DisasContext *ctx, TCGv ret, TCGv arg1,
             tcg_temp_free(inv1);
         } else {
             tcg_gen_setcond_tl(TCG_COND_GEU, cpu_ca, arg2, arg1);
+            log_store_spr(XER_CA, cpu_ca);
             tcg_gen_sub_tl(t0, arg2, arg1);
             gen_op_arith_compute_ca32(ctx, t0, arg1, arg2, cpu_ca32, 1);
         }

@@ -83,6 +83,8 @@ $ ninja -C build
 $ ninja -C build install
 ```
 
+_NOTE_: In case you need the traces for Rizin only please run configure with the option `--extra-cflags=-DRIZIN_TRACE`.
+
 # Usage
 
 To run executable `exec` compiled for `arch`, use `qemu-arch exec` command, e.g.,
