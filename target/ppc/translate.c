@@ -215,32 +215,37 @@ static inline void log_load_crf(uint32_t crf) {
     #endif
 }
 
-static inline void log_load_spr(uint32_t spr, TCGv val) {
+static inline void log_load_spr(uint32_t spr, uint32_t field, TCGv val) {
     #ifdef HAS_TRACEWRAP
 
     TCGv_i32 tmp0 = tcg_temp_new_i32();
+    TCGv_i32 tmp1 = tcg_temp_new_i32();
     tcg_gen_movi_i32(tmp0, spr);
+    tcg_gen_movi_i32(tmp1, field);
     #ifdef TARGET_PPC64
-    gen_helper_trace_load_spr_reg64(cpu_env, tmp0, val);
+    gen_helper_trace_load_spr_reg64(cpu_env, tmp0, tmp1, val);
     #else
-    gen_helper_trace_load_spr_reg(cpu_env, tmp0, val);
+    gen_helper_trace_load_spr_reg(cpu_env, tmp0, tmp1, val);
     #endif
     tcg_temp_free_i32(tmp0);
-
+    tcg_temp_free_i32(tmp1);
     #endif
 }
 
-static inline void log_store_spr(uint32_t spr, TCGv val) {
+static inline void log_store_spr(uint32_t spr, uint32_t field, TCGv val) {
     #ifdef HAS_TRACEWRAP
 
     TCGv_i32 tmp0 = tcg_temp_new_i32();
+    TCGv_i32 tmp1 = tcg_temp_new_i32();
     tcg_gen_movi_i32(tmp0, spr);
+    tcg_gen_movi_i32(tmp1, field);
     #ifdef TARGET_PPC64
-    gen_helper_trace_store_spr_reg64(cpu_env, tmp0, val);
+    gen_helper_trace_store_spr_reg64(cpu_env, tmp0, tmp1, val);
     #else
-    gen_helper_trace_store_spr_reg(cpu_env, tmp0, val);
+    gen_helper_trace_store_spr_reg(cpu_env, tmp0, tmp1, val);
     #endif
     tcg_temp_free_i32(tmp0);
+    tcg_temp_free_i32(tmp1);
 
     #endif
 }
@@ -393,7 +398,7 @@ static inline void gen_load_spr(TCGv t, int reg)
 {
     tcg_gen_ld_tl(t, cpu_env, offsetof(CPUPPCState, spr[reg]));
     #ifdef HAS_TRACEWRAP
-    log_load_spr(reg, t);
+    log_load_spr(reg, NO_SPR_FIELD, t);
     #endif
 }
 
@@ -401,7 +406,7 @@ static inline void gen_store_spr(int reg, TCGv t)
 {
     tcg_gen_st_tl(t, cpu_env, offsetof(CPUPPCState, spr[reg]));
     #ifdef HAS_TRACEWRAP
-    log_store_spr(reg, t);
+    log_store_spr(reg, NO_SPR_FIELD, t);
     #endif
 }
 
@@ -630,7 +635,7 @@ void spr_read_xer(DisasContext *ctx, int gprn, int sprn)
         tcg_gen_shli_tl(t0, cpu_ca32, XER_CA32);
         tcg_gen_or_tl(dst, dst, t0);
     }
-    log_load_spr(SPR_XER, dst);
+    log_load_spr(SPR_XER, NO_SPR_FIELD, dst);
     tcg_temp_free(t0);
     tcg_temp_free(t1);
     tcg_temp_free(t2);
@@ -644,7 +649,7 @@ void spr_write_xer(DisasContext *ctx, int sprn, int gprn)
                     ~((1u << XER_SO) |
                       (1u << XER_OV) | (1u << XER_OV32) |
                       (1u << XER_CA) | (1u << XER_CA32)));
-    log_store_spr(SPR_XER, cpu_xer);
+    log_store_spr(SPR_XER, NO_SPR_FIELD, cpu_xer);
     tcg_gen_extract_tl(cpu_ov32, src, XER_OV32, 1);
     tcg_gen_extract_tl(cpu_ca32, src, XER_CA32, 1);
     tcg_gen_extract_tl(cpu_so, src, XER_SO, 1);
@@ -656,13 +661,13 @@ void spr_write_xer(DisasContext *ctx, int sprn, int gprn)
 void spr_read_lr(DisasContext *ctx, int gprn, int sprn)
 {
     tcg_gen_mov_tl(cpu_gpr[gprn], cpu_lr);
-    log_load_spr(SPR_LR, cpu_lr);
+    log_load_spr(SPR_LR, NO_SPR_FIELD, cpu_lr);
 }
 
 void spr_write_lr(DisasContext *ctx, int sprn, int gprn)
 {
     tcg_gen_mov_tl(cpu_lr, cpu_gpr[gprn]);
-    log_store_spr(SPR_LR, cpu_lr);
+    log_store_spr(SPR_LR, NO_SPR_FIELD, cpu_lr);
 }
 
 /* CFAR */
@@ -670,7 +675,7 @@ void spr_write_lr(DisasContext *ctx, int sprn, int gprn)
 void spr_read_cfar(DisasContext *ctx, int gprn, int sprn)
 {
     tcg_gen_mov_tl(cpu_gpr[gprn], cpu_cfar);
-    log_load_spr(SPR_CFAR, cpu_cfar);
+    log_load_spr(SPR_CFAR, NO_SPR_FIELD, cpu_cfar);
 }
 
 void spr_write_cfar(DisasContext *ctx, int sprn, int gprn)
@@ -684,13 +689,13 @@ void spr_write_cfar(DisasContext *ctx, int sprn, int gprn)
 void spr_read_ctr(DisasContext *ctx, int gprn, int sprn)
 {
     tcg_gen_mov_tl(cpu_gpr[gprn], cpu_ctr);
-    log_load_spr(SPR_CTR, cpu_ctr);
+    log_load_spr(SPR_CTR, NO_SPR_FIELD, cpu_ctr);
 }
 
 void spr_write_ctr(DisasContext *ctx, int sprn, int gprn)
 {
     tcg_gen_mov_tl(cpu_ctr, cpu_gpr[gprn]);
-    log_store_spr(SPR_CTR, cpu_ctr);
+    log_store_spr(SPR_CTR, NO_SPR_FIELD, cpu_ctr);
 }
 
 /* User read access to SPR */
@@ -1625,7 +1630,7 @@ static inline void gen_op_cmp(TCGv arg0, TCGv arg1, int s, int crf)
                        t0, arg0, arg1, t1, t0);
 
     tcg_gen_trunc_tl_i32(t, t0);
-    log_load_spr(XER_SO, cpu_so);
+    log_load_spr(SPR_XER, XER_SO, cpu_so);
     tcg_gen_trunc_tl_i32(cpu_crf[crf], cpu_so);
     tcg_gen_or_i32(cpu_crf[crf], cpu_crf[crf], t);
     log_store_crf(crf);
@@ -1779,10 +1784,10 @@ static inline void gen_op_arith_compute_ov(DisasContext *ctx, TCGv arg0,
     }
     tcg_gen_or_tl(cpu_so, cpu_so, cpu_ov);
     #ifdef TARGET_PPC64
-    log_store_spr(XER_OV32, cpu_ov32);
+    log_store_spr(SPR_XER, XER_OV32, cpu_ov32);
     #endif
-    log_store_spr(XER_OV, cpu_ov);
-    log_store_spr(XER_SO, cpu_so);
+    log_store_spr(SPR_XER, XER_OV, cpu_ov);
+    log_store_spr(SPR_XER, XER_SO, cpu_so);
 }
 
 static inline void gen_op_arith_compute_ca32(DisasContext *ctx,
@@ -1804,7 +1809,7 @@ static inline void gen_op_arith_compute_ca32(DisasContext *ctx,
     }
     tcg_gen_xor_tl(t0, t0, res);
     tcg_gen_extract_tl(ca32, t0, 31, 1);
-    log_store_spr(XER_CA32, ca32);
+    log_store_spr(SPR_XER, XER_CA32, ca32);
     tcg_temp_free(t0);
 }
 
@@ -1836,7 +1841,7 @@ static inline void gen_op_arith_add(DisasContext *ctx, TCGv ret, TCGv arg1,
             tcg_gen_xor_tl(ca, t0, t1);        /* bits changed w/ carry */
             tcg_temp_free(t1);
             tcg_gen_extract_tl(ca, ca, 32, 1);
-            log_store_spr(XER_CA, ca);
+            log_store_spr(SPR_XER, XER_CA, ca);
             if (is_isa300(ctx)) {
                 tcg_gen_mov_tl(ca32, ca);
             }
@@ -2381,7 +2386,7 @@ static inline void gen_op_arith_subf(DisasContext *ctx, TCGv ret, TCGv arg1,
             TCGv t1 = tcg_temp_new();
             tcg_gen_not_tl(inv1, arg1);
             if (add_ca) {
-                log_load_spr(XER_CA, cpu_ca);
+                log_load_spr(SPR_XER, XER_CA, cpu_ca);
                 tcg_gen_add_tl(t0, arg2, cpu_ca);
             } else {
                 tcg_gen_addi_tl(t0, arg2, 1);
@@ -2390,22 +2395,22 @@ static inline void gen_op_arith_subf(DisasContext *ctx, TCGv ret, TCGv arg1,
             tcg_gen_add_tl(t0, t0, inv1);
             tcg_temp_free(inv1);
             tcg_gen_xor_tl(cpu_ca, t0, t1);         /* bits changes w/ carry */
-            log_store_spr(XER_CA, cpu_ca);
+            log_store_spr(SPR_XER, XER_CA, cpu_ca);
             tcg_temp_free(t1);
-            log_load_spr(XER_CA, cpu_ca);
+            log_load_spr(SPR_XER, XER_CA, cpu_ca);
             tcg_gen_extract_tl(cpu_ca, cpu_ca, 32, 1);
-            log_store_spr(XER_CA, cpu_ca);
+            log_store_spr(SPR_XER, XER_CA, cpu_ca);
             if (is_isa300(ctx)) {
                 tcg_gen_mov_tl(cpu_ca32, cpu_ca);
             }
             #ifdef RIZIN_TRACE
-            log_store_spr(XER_CA32, cpu_ca);
+            log_store_spr(SPR_XER, XER_CA32, cpu_ca);
             #endif
         } else if (add_ca) {
             TCGv zero, inv1 = tcg_temp_new();
             tcg_gen_not_tl(inv1, arg1);
             zero = tcg_const_tl(0);
-            log_load_spr(XER_CA, cpu_ca);
+            log_load_spr(SPR_XER, XER_CA, cpu_ca);
             tcg_gen_add2_tl(t0, cpu_ca, arg2, zero, cpu_ca, zero);
             tcg_gen_add2_tl(t0, cpu_ca, t0, cpu_ca, inv1, zero);
             gen_op_arith_compute_ca32(ctx, t0, inv1, arg2, cpu_ca32, 0);
@@ -2413,7 +2418,7 @@ static inline void gen_op_arith_subf(DisasContext *ctx, TCGv ret, TCGv arg1,
             tcg_temp_free(inv1);
         } else {
             tcg_gen_setcond_tl(TCG_COND_GEU, cpu_ca, arg2, arg1);
-            log_store_spr(XER_CA, cpu_ca);
+            log_store_spr(SPR_XER, XER_CA, cpu_ca);
             tcg_gen_sub_tl(t0, arg2, arg1);
             gen_op_arith_compute_ca32(ctx, t0, arg1, arg2, cpu_ca32, 1);
         }
@@ -4563,7 +4568,7 @@ static inline void gen_setlr(DisasContext *ctx, target_ulong nip)
         nip = (uint32_t)nip;
     }
     tcg_gen_movi_tl(cpu_lr, nip);
-    log_store_spr(SPR_LR, cpu_lr);
+    log_store_spr(SPR_LR, NO_SPR_FIELD, cpu_lr);
 }
 
 /* b ba bl bla */
@@ -4602,12 +4607,12 @@ static void gen_bcond(DisasContext *ctx, int type)
         target = tcg_temp_local_new();
         if (type == BCOND_CTR) {
             tcg_gen_mov_tl(target, cpu_ctr);
-            log_load_spr(SPR_CTR, cpu_ctr);
+            log_load_spr(SPR_CTR, NO_SPR_FIELD, cpu_ctr);
         } else if (type == BCOND_TAR) {
             gen_load_spr(target, SPR_TAR);
         } else {
             tcg_gen_mov_tl(target, cpu_lr);
-            log_load_spr(SPR_LR, target);
+            log_load_spr(SPR_LR, NO_SPR_FIELD, target);
         }
     } else {
         target = NULL;
@@ -4644,23 +4649,23 @@ static void gen_bcond(DisasContext *ctx, int type)
 
             if (NARROW_MODE(ctx)) {
                 tcg_gen_ext32u_tl(temp, cpu_ctr);
-                log_load_spr(SPR_CTR, cpu_ctr);
+                log_load_spr(SPR_CTR, NO_SPR_FIELD, cpu_ctr);
             } else {
                 tcg_gen_mov_tl(temp, cpu_ctr);
-                log_load_spr(SPR_CTR, cpu_ctr);
+                log_load_spr(SPR_CTR, NO_SPR_FIELD, cpu_ctr);
             }
             if (bo & 0x2) {
                 tcg_gen_brcondi_tl(TCG_COND_NE, temp, 0, l1);
             } else {
                 tcg_gen_brcondi_tl(TCG_COND_EQ, temp, 0, l1);
             }
-            log_load_spr(SPR_CTR, cpu_ctr);
+            log_load_spr(SPR_CTR, NO_SPR_FIELD, cpu_ctr);
             tcg_gen_subi_tl(cpu_ctr, cpu_ctr, 1);
-            log_store_spr(SPR_CTR, cpu_ctr);
+            log_store_spr(SPR_CTR, NO_SPR_FIELD, cpu_ctr);
         } else {
-            log_load_spr(SPR_CTR, cpu_ctr);
+            log_load_spr(SPR_CTR, NO_SPR_FIELD, cpu_ctr);
             tcg_gen_subi_tl(cpu_ctr, cpu_ctr, 1);
-            log_store_spr(SPR_CTR, cpu_ctr);
+            log_store_spr(SPR_CTR, NO_SPR_FIELD, cpu_ctr);
             if (NARROW_MODE(ctx)) {
                 tcg_gen_ext32u_tl(temp, cpu_ctr);
             } else {
@@ -4677,7 +4682,7 @@ static void gen_bcond(DisasContext *ctx, int type)
         // If BO_2 is not set, the CTR is checked.
         // But the logic is implemented here differently.
         // So we just log the event.
-        log_load_spr(SPR_CTR, cpu_ctr);
+        log_load_spr(SPR_CTR, NO_SPR_FIELD, cpu_ctr);
     }
     if ((bo & 0x10) == 0) {
         /* Test CR */

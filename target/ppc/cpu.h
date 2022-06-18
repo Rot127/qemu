@@ -1437,6 +1437,10 @@ typedef PowerPCCPU ArchCPU;
 #define CRF_CH_OR_CL  (1 << CRF_EQ_BIT)
 #define CRF_CH_AND_CL (1 << CRF_SO_BIT)
 
+#ifdef HAS_TRACEWRAP
+#define NO_SPR_FIELD -1
+#endif
+
 /* XER definitions */
 #define XER_SO  31
 #define XER_OV  30
