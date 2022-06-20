@@ -3393,6 +3393,10 @@ static void gen_srad(DisasContext *ctx)
 static inline void gen_sradi(DisasContext *ctx, int n)
 {
     log_load_gpr(rS(ctx->opcode));
+    log_load_spr(SPR_XER, XER_CA, cpu_ca);
+    #ifdef RIZIN_TRACE
+    log_load_spr(SPR_XER, XER_CA32, cpu_ca32);
+    #endif
     int sh = SH(ctx->opcode) + (n << 5);
     TCGv dst = cpu_gpr[rA(ctx->opcode)];
     TCGv src = cpu_gpr[rS(ctx->opcode)];
@@ -3415,6 +3419,10 @@ static inline void gen_sradi(DisasContext *ctx, int n)
         }
         tcg_gen_sari_tl(dst, src, sh);
     }
+    log_store_spr(SPR_XER, XER_CA, cpu_ca);
+    #ifdef RIZIN_TRACE
+    log_store_spr(SPR_XER, XER_CA32, cpu_ca);
+    #endif
     log_store_gpr(rA(ctx->opcode));
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, dst);
