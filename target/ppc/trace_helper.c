@@ -52,12 +52,12 @@ static const char *get_spr_name(uint32_t reg, uint32_t field, CPUPPCState *env) 
     return "not_handled_reg";
 }
 
-void HELPER(trace_newframe)(uint32_t pc)
+void HELPER(trace_newframe)(uint64_t pc)
 {
     qemu_trace_newframe(pc, 0);
 }
 
-void HELPER(trace_endframe)(CPUPPCState *state, uint32_t pc)
+void HELPER(trace_endframe)(CPUPPCState *state, uint64_t pc)
 {
     qemu_trace_endframe(state, pc, PPC_INSN_SIZE);
 }

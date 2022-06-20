@@ -776,8 +776,8 @@ DEF_HELPER_5(stqcx_be_parallel, i32, env, tl, i64, i64, i32)
 #endif
 
 #ifdef HAS_TRACEWRAP
-DEF_HELPER_1(trace_newframe, void, i32)
-DEF_HELPER_2(trace_endframe, void, env, i32)
+DEF_HELPER_1(trace_newframe, void, i64)
+DEF_HELPER_2(trace_endframe, void, env, i64)
 DEF_HELPER_3(trace_load_mem, void, i32, i32, i32)
 DEF_HELPER_3(trace_store_mem, void, i32, i32, i32)
 DEF_HELPER_3(trace_load_mem_i64, void, i32, i64, i32)
