@@ -4000,12 +4000,14 @@ static void gen_isync(DisasContext *ctx)
 
 static void gen_load_locked(DisasContext *ctx, MemOp memop)
 {
+    log_load_gpr(rD(ctx->opcode));
     TCGv gpr = cpu_gpr[rD(ctx->opcode)];
     TCGv t0 = tcg_temp_new();
 
     gen_set_access_type(ctx, ACCESS_RES);
     gen_addr_reg_index(ctx, t0);
     tcg_gen_qemu_ld_tl(gpr, t0, ctx->mem_idx, memop | MO_ALIGN);
+    log_load_mem(t0, gpr, memop);
     tcg_gen_mov_tl(cpu_reserve, t0);
     tcg_gen_mov_tl(cpu_reserve_val, gpr);
     tcg_gen_mb(TCG_MO_ALL | TCG_BAR_LDAQ);
@@ -4251,6 +4253,8 @@ static void gen_conditional_store(DisasContext *ctx, MemOp memop)
     TCGLabel *l2 = gen_new_label();
     TCGv t0 = tcg_temp_new();
     int reg = rS(ctx->opcode);
+    log_load_gpr(rS(ctx->opcode));
+    log_load_gpr(rA(ctx->opcode));
 
     gen_set_access_type(ctx, ACCESS_RES);
     gen_addr_reg_index(ctx, t0);
@@ -4261,6 +4265,7 @@ static void gen_conditional_store(DisasContext *ctx, MemOp memop)
     tcg_gen_atomic_cmpxchg_tl(t0, cpu_reserve, cpu_reserve_val,
                               cpu_gpr[reg], ctx->mem_idx,
                               DEF_MEMOP(memop) | MO_ALIGN);
+    log_store_mem(cpu_reserve, cpu_gpr[reg], DEF_MEMOP(memop));
     tcg_gen_setcond_tl(TCG_COND_EQ, t0, t0, cpu_reserve_val);
     tcg_gen_shli_tl(t0, t0, CRF_EQ_BIT);
     tcg_gen_or_tl(t0, t0, cpu_so);
