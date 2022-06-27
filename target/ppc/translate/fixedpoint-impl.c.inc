@@ -356,11 +356,10 @@ static bool trans_ADDI(DisasContext *ctx, arg_D *a)
     if (a->ra) {
         log_load_gpr(a->ra);
         tcg_gen_addi_tl(cpu_gpr[a->rt], cpu_gpr[a->ra], a->si);
-        log_store_gpr(a->rt);
     } else {
         tcg_gen_movi_tl(cpu_gpr[a->rt], a->si);
-        log_store_gpr(a->rt);
     }
+    log_store_gpr(a->rt);
     return true;
 }
 
