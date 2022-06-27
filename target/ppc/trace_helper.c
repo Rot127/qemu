@@ -178,6 +178,17 @@ void HELPER(trace_store_spr_reg64)(CPUPPCState *env, uint32_t reg, uint32_t fiel
 
 #endif
 
+static void memcpy_rev(void *dest, const void *src, size_t size) {
+    if (size < 1) {
+        return;
+    }
+    const char *s = src;
+    char *d = dest;
+    for (size_t i = 0, j = size - 1; i < size; --j, ++i) {
+        d[i] = s[j];
+    }
+}
+
 /*
  * Build frames
  *
@@ -216,7 +227,11 @@ static OperandInfo *build_load_store_reg_op(const char *name, int ls, const void
     oi->operand_usage = ou;
     oi->value.len = data_size;
     oi->value.data = g_malloc(oi->value.len);
+    //#ifdef BSWAP_NEEDED
+    //memcpy_rev(oi->value.data, data, data_size);
+    //#else
     memcpy(oi->value.data, data, data_size);
+    //#endif
 
     return oi;
 }
@@ -245,7 +260,11 @@ OperandInfo *load_store_mem(uint64_t addr, int ls, const void *data, size_t data
     oi->operand_usage = ou;
     oi->value.len = data_size;
     oi->value.data = g_malloc(oi->value.len);
+    #ifdef BSWAP_NEEDED
+    memcpy_rev(oi->value.data, data, data_size);
+    #else
     memcpy(oi->value.data, data, data_size);
+    #endif
     return oi;
 }
 
