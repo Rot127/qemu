@@ -1943,7 +1943,7 @@ static inline void gen_op_addic(DisasContext *ctx, bool compute_rc0)
     gen_op_arith_add(ctx, cpu_gpr[rD(ctx->opcode)], cpu_gpr[rA(ctx->opcode)],
                      c, cpu_ca, cpu_ca32, 0, 1, 0, compute_rc0);
     tcg_temp_free(c);
-    log_load_gpr(rD(ctx->opcode));
+    log_store_gpr(rD(ctx->opcode));
 }
 
 static void gen_addic(DisasContext *ctx)
@@ -3547,7 +3547,7 @@ static inline void gen_addr_reg_index(DisasContext *ctx, TCGv EA)
 
 static inline void gen_addr_register(DisasContext *ctx, TCGv EA)
 {
-    log_load_gpr(rD(ctx->opcode));
+    log_load_gpr(rA(ctx->opcode));
     if (rA(ctx->opcode) == 0) {
         tcg_gen_movi_tl(EA, 0);
     } else if (NARROW_MODE(ctx)) {
