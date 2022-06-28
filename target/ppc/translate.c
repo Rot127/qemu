@@ -2934,6 +2934,7 @@ static void gen_darn(DisasContext *ctx)
 static void gen_rlwimi(DisasContext *ctx)
 {
     log_load_gpr(rS(ctx->opcode));
+    log_load_gpr(rA(ctx->opcode));
     TCGv t_ra = cpu_gpr[rA(ctx->opcode)];
     TCGv t_rs = cpu_gpr[rS(ctx->opcode)];
     uint32_t sh = SH(ctx->opcode);
