@@ -4563,14 +4563,14 @@ static inline void gen_update_cfar(DisasContext *ctx, target_ulong nip)
 
 static inline bool use_goto_tb(DisasContext *ctx, target_ulong dest)
 {
-#ifdef HAS_TRACEWRAP
-    gen_trace_endframe(ctx->cia);
-#endif
     return translator_use_goto_tb(&ctx->base, dest);
 }
 
 static void gen_lookup_and_goto_ptr(DisasContext *ctx)
 {
+    #ifdef HAS_TRACEWRAP
+    gen_trace_endframe(ctx->cia);
+    #endif
     if (unlikely(ctx->singlestep_enabled)) {
         gen_debug_exception(ctx);
     } else {
@@ -4585,6 +4585,9 @@ static void gen_goto_tb(DisasContext *ctx, int n, target_ulong dest)
         dest = (uint32_t) dest;
     }
     if (use_goto_tb(ctx, dest)) {
+        #ifdef HAS_TRACEWRAP
+        gen_trace_endframe(ctx->cia);
+        #endif
         tcg_gen_goto_tb(n);
         tcg_gen_movi_tl(cpu_nip, dest & ~3);
         tcg_gen_exit_tb(ctx->base.tb, n);
@@ -8984,6 +8987,9 @@ static void ppc_tr_tb_stop(DisasContextBase *dcbase, CPUState *cs)
     switch (is_jmp) {
     case DISAS_TOO_MANY:
         if (use_goto_tb(ctx, nip)) {
+        #ifdef HAS_TRACEWRAP
+            gen_trace_endframe(ctx->cia);
+        #endif
             tcg_gen_goto_tb(0);
             gen_update_nip(ctx, nip);
             tcg_gen_exit_tb(ctx->base.tb, 0);
