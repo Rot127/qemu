@@ -1805,11 +1805,9 @@ static inline void gen_op_arith_compute_ca32(DisasContext *ctx,
                                              TCGv ca32, int sub)
 {
     TCGv t0;
-    #ifndef RIZIN_TRACE
     if (!is_isa300(ctx)) {
         return;
     }
-    #endif
 
     t0 = tcg_temp_new();
     if (sub) {
@@ -1854,10 +1852,8 @@ static inline void gen_op_arith_add(DisasContext *ctx, TCGv ret, TCGv arg1,
             tcg_gen_extract_tl(ca, ca, 32, 1);
             if (is_isa300(ctx)) {
                 tcg_gen_mov_tl(ca32, ca);
+                log_store_spr(SPR_XER, XER_CA32, ca);
             }
-            #ifdef RIZIN_TRACE
-            log_store_spr(SPR_XER, XER_CA32, ca);
-            #endif
         } else {
             TCGv zero = tcg_const_tl(0);
             if (add_ca) {
@@ -2414,10 +2410,8 @@ static inline void gen_op_arith_subf(DisasContext *ctx, TCGv ret, TCGv arg1,
             tcg_gen_extract_tl(cpu_ca, cpu_ca, 32, 1);
             if (is_isa300(ctx)) {
                 tcg_gen_mov_tl(cpu_ca32, cpu_ca);
+                log_store_spr(SPR_XER, XER_CA32, cpu_ca);
             }
-            #ifdef RIZIN_TRACE
-            log_store_spr(SPR_XER, XER_CA32, cpu_ca);
-            #endif
         } else if (add_ca) {
             TCGv zero, inv1 = tcg_temp_new();
             tcg_gen_not_tl(inv1, arg1);
@@ -3294,9 +3288,9 @@ static void gen_sraw(DisasContext *ctx)
                     cpu_gpr[rS(ctx->opcode)], cpu_gpr[rB(ctx->opcode)]);
     log_store_gpr(rA(ctx->opcode));
     log_store_spr(SPR_XER, XER_CA, cpu_ca);
-    #ifdef RIZIN_TRACE
-    log_store_spr(SPR_XER, XER_CA32, cpu_ca32);
-    #endif
+    if (is_isa300(ctx)) {
+        log_store_spr(SPR_XER, XER_CA32, cpu_ca32);
+    }
 
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rA(ctx->opcode)]);
@@ -3316,6 +3310,7 @@ static void gen_srawi(DisasContext *ctx)
         tcg_gen_movi_tl(cpu_ca, 0);
         if (is_isa300(ctx)) {
             tcg_gen_movi_tl(cpu_ca32, 0);
+            log_store_spr(SPR_XER, XER_CA32, cpu_ca);
         }
     } else {
         TCGv t0;
@@ -3328,12 +3323,10 @@ static void gen_srawi(DisasContext *ctx)
         tcg_gen_setcondi_tl(TCG_COND_NE, cpu_ca, cpu_ca, 0);
         if (is_isa300(ctx)) {
             tcg_gen_mov_tl(cpu_ca32, cpu_ca);
+            log_store_spr(SPR_XER, XER_CA32, cpu_ca);
         }
         tcg_gen_sari_tl(dst, dst, sh);
     }
-    #ifdef RIZIN_TRACE
-    log_store_spr(SPR_XER, XER_CA32, cpu_ca);
-    #endif
     log_store_spr(SPR_XER, XER_CA, cpu_ca);
     log_store_gpr(rA(ctx->opcode));
     if (unlikely(Rc(ctx->opcode) != 0)) {
@@ -3411,9 +3404,6 @@ static inline void gen_sradi(DisasContext *ctx, int n)
 {
     log_load_gpr(rS(ctx->opcode));
     log_load_spr(SPR_XER, XER_CA, cpu_ca);
-    #ifdef RIZIN_TRACE
-    log_load_spr(SPR_XER, XER_CA32, cpu_ca32);
-    #endif
     int sh = SH(ctx->opcode) + (n << 5);
     TCGv dst = cpu_gpr[rA(ctx->opcode)];
     TCGv src = cpu_gpr[rS(ctx->opcode)];
@@ -3422,6 +3412,7 @@ static inline void gen_sradi(DisasContext *ctx, int n)
         tcg_gen_movi_tl(cpu_ca, 0);
         if (is_isa300(ctx)) {
             tcg_gen_movi_tl(cpu_ca32, 0);
+            log_store_spr(SPR_XER, XER_CA32, cpu_ca);
         }
     } else {
         TCGv t0;
@@ -3433,13 +3424,11 @@ static inline void gen_sradi(DisasContext *ctx, int n)
         tcg_gen_setcondi_tl(TCG_COND_NE, cpu_ca, cpu_ca, 0);
         if (is_isa300(ctx)) {
             tcg_gen_mov_tl(cpu_ca32, cpu_ca);
+            log_store_spr(SPR_XER, XER_CA32, cpu_ca);
         }
         tcg_gen_sari_tl(dst, src, sh);
     }
     log_store_spr(SPR_XER, XER_CA, cpu_ca);
-    #ifdef RIZIN_TRACE
-    log_store_spr(SPR_XER, XER_CA32, cpu_ca);
-    #endif
     log_store_gpr(rA(ctx->opcode));
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, dst);
