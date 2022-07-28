@@ -4827,7 +4827,9 @@ GEN_CRLOGIC(crxor, tcg_gen_xor_i32, 0x06);
 /* mcrf */
 static void gen_mcrf(DisasContext *ctx)
 {
+    log_load_crf(crfS(ctx->opcode));
     tcg_gen_mov_i32(cpu_crf[crfD(ctx->opcode)], cpu_crf[crfS(ctx->opcode)]);
+    log_store_crf(crfD(ctx->opcode));
 }
 
 /***                           System linkage                              ***/
