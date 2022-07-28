@@ -5064,29 +5064,40 @@ static void gen_mfcr(DisasContext *ctx)
         crm = CRM(ctx->opcode);
         if (likely(crm && ((crm & (crm - 1)) == 0))) {
             crn = ctz32(crm);
+            log_load_crf(7-crn);
             tcg_gen_extu_i32_tl(cpu_gpr[rD(ctx->opcode)], cpu_crf[7 - crn]);
             tcg_gen_shli_tl(cpu_gpr[rD(ctx->opcode)],
                             cpu_gpr[rD(ctx->opcode)], crn * 4);
+            log_store_gpr(rD(ctx->opcode));
         }
     } else {
         TCGv_i32 t0 = tcg_temp_new_i32();
+        log_load_crf(0);
         tcg_gen_mov_i32(t0, cpu_crf[0]);
         tcg_gen_shli_i32(t0, t0, 4);
+        log_load_crf(1);
         tcg_gen_or_i32(t0, t0, cpu_crf[1]);
         tcg_gen_shli_i32(t0, t0, 4);
+        log_load_crf(2);
         tcg_gen_or_i32(t0, t0, cpu_crf[2]);
         tcg_gen_shli_i32(t0, t0, 4);
+        log_load_crf(3);
         tcg_gen_or_i32(t0, t0, cpu_crf[3]);
         tcg_gen_shli_i32(t0, t0, 4);
+        log_load_crf(4);
         tcg_gen_or_i32(t0, t0, cpu_crf[4]);
         tcg_gen_shli_i32(t0, t0, 4);
+        log_load_crf(5);
         tcg_gen_or_i32(t0, t0, cpu_crf[5]);
         tcg_gen_shli_i32(t0, t0, 4);
+        log_load_crf(6);
         tcg_gen_or_i32(t0, t0, cpu_crf[6]);
         tcg_gen_shli_i32(t0, t0, 4);
+        log_load_crf(7);
         tcg_gen_or_i32(t0, t0, cpu_crf[7]);
         tcg_gen_extu_i32_tl(cpu_gpr[rD(ctx->opcode)], t0);
         tcg_temp_free_i32(t0);
+        log_store_gpr(rD(ctx->opcode));
     }
 }
 
@@ -5175,7 +5186,7 @@ static void gen_mftb(DisasContext *ctx)
 static void gen_mtcrf(DisasContext *ctx)
 {
     uint32_t crm, crn;
-
+    log_load_gpr(rS(ctx->opcode));
     crm = CRM(ctx->opcode);
     if (likely((ctx->opcode & 0x00100000))) {
         if (crm && ((crm & (crm - 1)) == 0)) {
@@ -5185,6 +5196,7 @@ static void gen_mtcrf(DisasContext *ctx)
             tcg_gen_shri_i32(temp, temp, crn * 4);
             tcg_gen_andi_i32(cpu_crf[7 - crn], temp, 0xf);
             tcg_temp_free_i32(temp);
+            log_store_crf(7 - crn);
         }
     } else {
         TCGv_i32 temp = tcg_temp_new_i32();
@@ -5193,6 +5205,7 @@ static void gen_mtcrf(DisasContext *ctx)
             if (crm & (1 << crn)) {
                     tcg_gen_shri_i32(cpu_crf[7 - crn], temp, crn * 4);
                     tcg_gen_andi_i32(cpu_crf[7 - crn], cpu_crf[7 - crn], 0xf);
+                    log_store_crf(7 - crn);
             }
         }
         tcg_temp_free_i32(temp);
