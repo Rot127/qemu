@@ -3395,6 +3395,10 @@ static void gen_srad(DisasContext *ctx)
     gen_helper_srad(cpu_gpr[rA(ctx->opcode)], cpu_env,
                     cpu_gpr[rS(ctx->opcode)], cpu_gpr[rB(ctx->opcode)]);
     log_store_gpr(rA(ctx->opcode));
+    log_store_spr(SPR_XER, XER_CA, cpu_ca);
+    if (is_isa300(ctx)) {
+        log_store_spr(SPR_XER, XER_CA32, cpu_ca);
+    }
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rA(ctx->opcode)]);
     }
