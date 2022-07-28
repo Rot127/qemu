@@ -1807,9 +1807,9 @@ static inline void gen_op_arith_compute_ov(DisasContext *ctx, TCGv arg0,
         tcg_gen_extract_tl(cpu_ov, cpu_ov, TARGET_LONG_BITS - 1, 1);
     }
     tcg_gen_or_tl(cpu_so, cpu_so, cpu_ov);
-    #ifdef TARGET_PPC64
-    log_store_spr(SPR_XER, XER_OV32, cpu_ov32);
-    #endif
+    if (is_isa300(ctx)) {
+        log_store_spr(SPR_XER, XER_OV32, cpu_ov32);
+    }
     log_store_spr(SPR_XER, XER_OV, cpu_ov);
     log_store_spr(SPR_XER, XER_SO, cpu_so);
 }
@@ -2424,13 +2424,11 @@ static inline void gen_op_arith_subf(DisasContext *ctx, TCGv ret, TCGv arg1,
             tcg_gen_extract_tl(cpu_ca, cpu_ca, 32, 1);
             if (is_isa300(ctx)) {
                 tcg_gen_mov_tl(cpu_ca32, cpu_ca);
-                log_store_spr(SPR_XER, XER_CA32, cpu_ca);
             }
         } else if (add_ca) {
             TCGv zero, inv1 = tcg_temp_new();
             tcg_gen_not_tl(inv1, arg1);
             zero = tcg_const_tl(0);
-            log_load_spr(SPR_XER, XER_CA, cpu_ca);
             tcg_gen_add2_tl(t0, cpu_ca, arg2, zero, cpu_ca, zero);
             tcg_gen_add2_tl(t0, cpu_ca, t0, cpu_ca, inv1, zero);
             gen_op_arith_compute_ca32(ctx, t0, inv1, arg2, cpu_ca32, 0);
@@ -2442,6 +2440,9 @@ static inline void gen_op_arith_subf(DisasContext *ctx, TCGv ret, TCGv arg1,
             gen_op_arith_compute_ca32(ctx, t0, arg1, arg2, cpu_ca32, 1);
         }
         log_store_spr(SPR_XER, XER_CA, cpu_ca);
+        if (is_isa300(ctx)) {
+            log_store_spr(SPR_XER, XER_CA32, cpu_ca);
+        }
     } else if (add_ca) {
         /*
          * Since we're ignoring carry-out, we can simplify the
