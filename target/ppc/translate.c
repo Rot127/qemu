@@ -645,7 +645,14 @@ void spr_read_xer(DisasContext *ctx, int gprn, int sprn)
         tcg_gen_shli_tl(t0, cpu_ca32, XER_CA32);
         tcg_gen_or_tl(dst, dst, t0);
     }
-    log_load_spr(SPR_XER, NO_SPR_FIELD, dst);
+    log_load_spr(SPR_XER, XER_SO, cpu_so);
+    log_load_spr(SPR_XER, XER_OV, cpu_ov);
+    log_load_spr(SPR_XER, XER_CA, cpu_ca);
+    if (is_isa300(ctx)) {
+        log_load_spr(SPR_XER, XER_CA32, cpu_ca32);
+        log_load_spr(SPR_XER, XER_OV32, cpu_ov32);
+    }
+    log_store_gpr(gprn);
     tcg_temp_free(t0);
     tcg_temp_free(t1);
     tcg_temp_free(t2);
@@ -654,17 +661,24 @@ void spr_read_xer(DisasContext *ctx, int gprn, int sprn)
 void spr_write_xer(DisasContext *ctx, int sprn, int gprn)
 {
     TCGv src = cpu_gpr[gprn];
+    log_load_gpr(gprn);
     /* Write all flags, while reading back check for isa300 */
     tcg_gen_andi_tl(cpu_xer, src,
                     ~((1u << XER_SO) |
                       (1u << XER_OV) | (1u << XER_OV32) |
                       (1u << XER_CA) | (1u << XER_CA32)));
-    log_store_spr(SPR_XER, NO_SPR_FIELD, cpu_xer);
     tcg_gen_extract_tl(cpu_ov32, src, XER_OV32, 1);
     tcg_gen_extract_tl(cpu_ca32, src, XER_CA32, 1);
     tcg_gen_extract_tl(cpu_so, src, XER_SO, 1);
     tcg_gen_extract_tl(cpu_ov, src, XER_OV, 1);
     tcg_gen_extract_tl(cpu_ca, src, XER_CA, 1);
+    log_store_spr(SPR_XER, XER_SO, cpu_so);
+    log_store_spr(SPR_XER, XER_OV, cpu_ov);
+    log_store_spr(SPR_XER, XER_CA, cpu_ca);
+    if (is_isa300(ctx)) {
+        log_store_spr(SPR_XER, XER_CA32, cpu_ca32);
+        log_store_spr(SPR_XER, XER_OV32, cpu_ov32);
+    }
 }
 
 /* LR */
