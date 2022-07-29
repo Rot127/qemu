@@ -1985,7 +1985,7 @@ static inline void gen_op_arith_divw(DisasContext *ctx, TCGv ret, TCGv arg1,
         tcg_gen_movi_i32(t3, 0);
         tcg_gen_movcond_i32(TCG_COND_NE, t1, t2, t3, t2, t1);
         tcg_gen_div_i32(t3, t0, t1);
-        tcg_gen_extu_i32_tl(ret, t3);
+        tcg_gen_ext_i32_tl(ret, t3);
     } else {
         tcg_gen_setcondi_i32(TCG_COND_EQ, t2, t1, 0);
         tcg_gen_movi_i32(t3, 0);
