@@ -4739,14 +4739,12 @@ static void gen_bcond(DisasContext *ctx, int type)
         uint32_t bi = BI(ctx->opcode);
         uint32_t mask = 0x08 >> (bi & 0x03);
         TCGv_i32 temp = tcg_temp_new_i32();
-
+        log_load_crf(bi >> 2);
         if (bo & 0x8) {
             tcg_gen_andi_i32(temp, cpu_crf[bi >> 2], mask);
-            log_load_crf(bi >> 2);
             tcg_gen_brcondi_i32(TCG_COND_EQ, temp, 0, l1);
         } else {
             tcg_gen_andi_i32(temp, cpu_crf[bi >> 2], mask);
-            log_load_crf(bi >> 2);
             tcg_gen_brcondi_i32(TCG_COND_NE, temp, 0, l1);
         }
         tcg_temp_free_i32(temp);
@@ -4803,6 +4801,8 @@ static void glue(gen_, name)(DisasContext *ctx)                               \
     uint8_t bitmask;                                                          \
     int sh;                                                                   \
     TCGv_i32 t0, t1;                                                          \
+    log_load_crf(crbA(ctx->opcode) >> 2);                                     \
+    log_load_crf(crbB(ctx->opcode) >> 2);                                     \
     sh = (crbD(ctx->opcode) & 0x03) - (crbA(ctx->opcode) & 0x03);             \
     t0 = tcg_temp_new_i32();                                                  \
     if (sh > 0)                                                               \
@@ -4824,6 +4824,7 @@ static void glue(gen_, name)(DisasContext *ctx)                               \
     tcg_gen_andi_i32(t0, t0, bitmask);                                        \
     tcg_gen_andi_i32(t1, cpu_crf[crbD(ctx->opcode) >> 2], ~bitmask);          \
     tcg_gen_or_i32(cpu_crf[crbD(ctx->opcode) >> 2], t0, t1);                  \
+    log_store_crf(crbD(ctx->opcode) >> 2);                                    \
     tcg_temp_free_i32(t0);                                                    \
     tcg_temp_free_i32(t1);                                                    \
 }
