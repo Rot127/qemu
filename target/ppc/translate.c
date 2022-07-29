@@ -2328,8 +2328,8 @@ static void gen_mulhd(DisasContext *ctx)
     tcg_temp_free(lo);
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rD(ctx->opcode)]);
-    log_store_gpr(rD(ctx->opcode));
     }
+    log_store_gpr(rD(ctx->opcode));
 }
 
 /* mulhdu  mulhdu. */
