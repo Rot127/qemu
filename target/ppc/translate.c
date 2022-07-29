@@ -2597,10 +2597,12 @@ static void gen_cntlzw(DisasContext *ctx)
 {
     TCGv_i32 t = tcg_temp_new_i32();
 
+    log_load_gpr(rS(ctx->opcode));
     tcg_gen_trunc_tl_i32(t, cpu_gpr[rS(ctx->opcode)]);
     tcg_gen_clzi_i32(t, t, 32);
     tcg_gen_extu_i32_tl(cpu_gpr[rA(ctx->opcode)], t);
     tcg_temp_free_i32(t);
+    log_store_gpr(rA(ctx->opcode));
 
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rA(ctx->opcode)]);
@@ -2612,10 +2614,12 @@ static void gen_cnttzw(DisasContext *ctx)
 {
     TCGv_i32 t = tcg_temp_new_i32();
 
+    log_load_gpr(rS(ctx->opcode));
     tcg_gen_trunc_tl_i32(t, cpu_gpr[rS(ctx->opcode)]);
     tcg_gen_ctzi_i32(t, t, 32);
     tcg_gen_extu_i32_tl(cpu_gpr[rA(ctx->opcode)], t);
     tcg_temp_free_i32(t);
+    log_store_gpr(rA(ctx->opcode));
 
     if (unlikely(Rc(ctx->opcode) != 0)) {
         gen_set_Rc0(ctx, cpu_gpr[rA(ctx->opcode)]);
