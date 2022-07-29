@@ -4692,6 +4692,7 @@ static void gen_bcond(DisasContext *ctx, int type)
              * use this form in a way it just triggers the side-effect without
              * doing anything else harmful.
              */
+            log_load_spr(SPR_CTR, NO_SPR_FIELD, cpu_ctr);
             if (unlikely(!is_book3s_arch2x(ctx))) {
                 gen_inval_exception(ctx, POWERPC_EXCP_INVAL_INVAL);
                 tcg_temp_free(temp);
@@ -4701,17 +4702,14 @@ static void gen_bcond(DisasContext *ctx, int type)
 
             if (NARROW_MODE(ctx)) {
                 tcg_gen_ext32u_tl(temp, cpu_ctr);
-                log_load_spr(SPR_CTR, NO_SPR_FIELD, cpu_ctr);
             } else {
                 tcg_gen_mov_tl(temp, cpu_ctr);
-                log_load_spr(SPR_CTR, NO_SPR_FIELD, cpu_ctr);
             }
             if (bo & 0x2) {
                 tcg_gen_brcondi_tl(TCG_COND_NE, temp, 0, l1);
             } else {
                 tcg_gen_brcondi_tl(TCG_COND_EQ, temp, 0, l1);
             }
-            log_load_spr(SPR_CTR, NO_SPR_FIELD, cpu_ctr);
             tcg_gen_subi_tl(cpu_ctr, cpu_ctr, 1);
             log_store_spr(SPR_CTR, NO_SPR_FIELD, cpu_ctr);
         } else {
