@@ -4689,6 +4689,7 @@ static void gen_bcond(DisasContext *ctx, int type)
         log_load_crf(BI(ctx->opcode) >> 2);
     }
     #endif
+    log_load_spr(SPR_CTR, NO_SPR_FIELD, cpu_ctr);
     if ((bo & 0x4) == 0) {
         /* Decrement and test CTR */
         TCGv temp = tcg_temp_new();
@@ -4708,7 +4709,6 @@ static void gen_bcond(DisasContext *ctx, int type)
              * use this form in a way it just triggers the side-effect without
              * doing anything else harmful.
              */
-            log_load_spr(SPR_CTR, NO_SPR_FIELD, cpu_ctr);
             if (unlikely(!is_book3s_arch2x(ctx))) {
                 gen_inval_exception(ctx, POWERPC_EXCP_INVAL_INVAL);
                 tcg_temp_free(temp);
@@ -4729,7 +4729,6 @@ static void gen_bcond(DisasContext *ctx, int type)
             tcg_gen_subi_tl(cpu_ctr, cpu_ctr, 1);
             log_store_spr(SPR_CTR, NO_SPR_FIELD, cpu_ctr);
         } else {
-            log_load_spr(SPR_CTR, NO_SPR_FIELD, cpu_ctr);
             tcg_gen_subi_tl(cpu_ctr, cpu_ctr, 1);
             log_store_spr(SPR_CTR, NO_SPR_FIELD, cpu_ctr);
             if (NARROW_MODE(ctx)) {
@@ -4744,11 +4743,6 @@ static void gen_bcond(DisasContext *ctx, int type)
             }
         }
         tcg_temp_free(temp);
-    } else {
-        // If BO_2 is not set, the CTR is checked.
-        // But the logic is implemented here differently.
-        // So we just log the event.
-        log_load_spr(SPR_CTR, NO_SPR_FIELD, cpu_ctr);
     }
     if ((bo & 0x10) == 0) {
         /* Test CR */
