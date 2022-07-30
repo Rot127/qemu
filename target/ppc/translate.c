@@ -448,7 +448,9 @@ static inline void gen_update_nip(DisasContext *ctx, target_ulong nip)
 static void gen_exception_err(DisasContext *ctx, uint32_t excp, uint32_t error)
 {
     TCGv_i32 t0, t1;
-
+    #ifdef HAS_TRACEWRAP
+    gen_trace_endframe(ctx->cia);
+    #endif
     /*
      * These are all synchronous exceptions, we set the PC back to the
      * faulting instruction
