@@ -662,7 +662,7 @@ void spr_write_xer(DisasContext *ctx, int sprn, int gprn)
     log_load_gpr(gprn);
     /* Write all flags, while reading back check for isa300 */
     tcg_gen_andi_tl(cpu_xer, src,
-                    ~((1u << XER_SO) |
+                    ((1u << XER_SO) |
                       (1u << XER_OV) | (1u << XER_OV32) |
                       (1u << XER_CA) | (1u << XER_CA32)));
     tcg_gen_extract_tl(cpu_ov32, src, XER_OV32, 1);
