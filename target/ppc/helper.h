@@ -789,6 +789,7 @@ DEF_HELPER_2(trace_load_crf, void, i32, i32)
 DEF_HELPER_4(trace_load_spr_reg, void, env, i32, i32, i32)
 DEF_HELPER_4(trace_store_spr_reg, void, env, i32, i32, i32)
 DEF_HELPER_1(trace_mode, void, ptr)
+DEF_HELPER_2(trace_dcbz_i32, void, env, i32)
 #ifdef TARGET_PPC64
 DEF_HELPER_2(trace_load_reg64, void, i32, i64)
 DEF_HELPER_2(trace_store_reg64, void, i32, i64)
@@ -796,5 +797,6 @@ DEF_HELPER_3(trace_load_mem64, void, i64, i64, i32)
 DEF_HELPER_3(trace_store_mem64, void, i64, i64, i32)
 DEF_HELPER_4(trace_load_spr_reg64, void, env, i32, i32, i64)
 DEF_HELPER_4(trace_store_spr_reg64, void, env, i32, i32, i64)
+DEF_HELPER_2(trace_dcbz_i64, void, env, i64)
 #endif
 #endif /* HAS_TRACEWRAP */

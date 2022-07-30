@@ -73,6 +73,11 @@ void HELPER(trace_store_mem_i64)(uint32_t addr, uint64_t val, MemOp op)
     qemu_trace_add_operand(oi, 0x2);
 }
 
+void HELPER(trace_dcbz_i32)(CPUPPCState *state, uint32_t addr)
+{
+    trace_dcbz(state, addr);
+}
+
 void HELPER(trace_load_reg)(uint32_t reg, uint32_t val)
 {
     OperandInfo *oi = load_store_reg(reg, val, 0);
@@ -116,6 +121,11 @@ void HELPER(trace_store_spr_reg)(CPUPPCState *env, uint32_t reg, uint32_t field,
 void HELPER(trace_mode)(void *mode) { qemu_trace_set_mode(mode); }
 
 #ifdef TARGET_PPC64
+void HELPER(trace_dcbz_i64)(CPUPPCState *state, uint64_t addr)
+{
+    trace_dcbz(state, addr);
+}
+
 void HELPER(trace_load_reg64)(uint32_t reg, uint64_t val)
 {
     OperandInfo *oi = load_store_reg64(reg, val, 0);
@@ -266,4 +276,12 @@ OperandInfo *load_store_crf(uint32_t crf, uint64_t val, int ls) {
 
 OperandInfo *load_store_spr_reg(const char *name, uint64_t val, uint32_t size, int ls) {
     return build_load_store_reg_op(name, ls, &val, size);
+}
+
+void trace_dcbz(CPUPPCState *state, uint64_t addr) {
+    qemu_log("Clear cache at 0x%lx size: %d data: 0x%llx\n", (unsigned long) addr, memop_size(state->dcache_line_size), (unsigned long long) 0);
+    char *val = calloc(state->dcache_line_size, 1);
+    OperandInfo *oi = load_store_mem(addr, 1, val, state->dcache_line_size);
+    qemu_trace_add_operand(oi, 0x2);
+    free(val);
 }

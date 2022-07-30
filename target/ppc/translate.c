@@ -141,6 +141,15 @@ static void gen_trace_load_crf(int crf, TCGv_i32 var)
     gen_helper_trace_load_crf(t, var);
     tcg_temp_free_i32(t);
 }
+
+static void gen_trace_dcbz(TCGv addr)
+{
+    #ifdef TARGET_PPC64
+    gen_helper_trace_dcbz_i64(cpu_env, addr);
+    #else
+    gen_helper_trace_dcbz_i32(cpu_env, addr);
+    #endif
+}
 #endif /* HAS_TRACEWRAP */
 
 static inline void log_load_mem_i64(TCGv addr, TCGv_i64 val, MemOp op) {
@@ -5535,6 +5544,7 @@ static void gen_dcbz(DisasContext *ctx)
     tcgv_op = tcg_const_i32(ctx->opcode & 0x03FF000);
     gen_addr_reg_index(ctx, tcgv_addr);
     gen_helper_dcbz(cpu_env, tcgv_addr, tcgv_op);
+    gen_trace_dcbz(tcgv_addr);
     tcg_temp_free(tcgv_addr);
     tcg_temp_free_i32(tcgv_op);
 }
