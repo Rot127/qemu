@@ -4681,6 +4681,12 @@ static void gen_bcond(DisasContext *ctx, int type)
         gen_setlr(ctx, ctx->base.pc_next);
     }
     l1 = gen_new_label();
+    #ifdef HAS_TRACEWRAP
+    if ((bo & 0x10) == 0) {
+        // Log the cr read here. Because if the ctr condition fails the cr load is not traced.
+        log_load_crf(BI(ctx->opcode) >> 2);
+    }
+    #endif
     if ((bo & 0x4) == 0) {
         /* Decrement and test CTR */
         TCGv temp = tcg_temp_new();
@@ -4747,7 +4753,6 @@ static void gen_bcond(DisasContext *ctx, int type)
         uint32_t bi = BI(ctx->opcode);
         uint32_t mask = 0x08 >> (bi & 0x03);
         TCGv_i32 temp = tcg_temp_new_i32();
-        log_load_crf(bi >> 2);
         if (bo & 0x8) {
             tcg_gen_andi_i32(temp, cpu_crf[bi >> 2], mask);
             tcg_gen_brcondi_i32(TCG_COND_EQ, temp, 0, l1);
