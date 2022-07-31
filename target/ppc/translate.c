@@ -3251,6 +3251,7 @@ GEN_PPC64_R2(rldcr, 0x1E, 0x09);
 static void gen_rldimi(DisasContext *ctx, int mbn, int shn)
 {
     log_load_gpr(rS(ctx->opcode));
+    log_load_gpr(rA(ctx->opcode));
     TCGv t_ra = cpu_gpr[rA(ctx->opcode)];
     TCGv t_rs = cpu_gpr[rS(ctx->opcode)];
     uint32_t sh = SH(ctx->opcode) | (shn << 5);
