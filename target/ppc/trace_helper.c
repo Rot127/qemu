@@ -260,6 +260,11 @@ OperandInfo *load_store_mem(uint64_t addr, int ls, const void *data, size_t data
 }
 
 OperandInfo *load_store_reg(uint32_t reg, uint32_t val, int ls) {
+    if (reg == UINT32_MAX) {
+        // This is the 0 register of (RA|0) cases.
+        uint32_t v = 0;
+        return build_load_store_reg_op("0", ls, &v, sizeof(val));
+    }
     const char *name = ppc_gpr_reg_names[reg];
     return build_load_store_reg_op(name, ls, &val, sizeof(val));
 }
