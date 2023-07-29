@@ -202,6 +202,12 @@ static inline void log_store_mem(TCGv addr, TCGv val, MemOp op) {
 
 static inline void log_load_gpr(uint32_t rx) {
     #ifdef HAS_TRACEWRAP
+    if (rx == UINT32_MAX) {
+        // Hack for the 0 register. In (RA|0) cases.
+        TCGv_i32 o = tcg_const_i32(0);
+        gen_trace_load_reg(UINT32_MAX, o);
+        return;
+    }
     gen_trace_load_reg(rx, cpu_gpr[rx]);
     #endif
 }

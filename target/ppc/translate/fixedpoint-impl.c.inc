@@ -357,6 +357,8 @@ static bool trans_ADDI(DisasContext *ctx, arg_D *a)
         log_load_gpr(a->ra);
         tcg_gen_addi_tl(cpu_gpr[a->rt], cpu_gpr[a->ra], a->si);
     } else {
+        // 0 register of (RA|0) case.
+        log_load_gpr(UINT32_MAX);
         tcg_gen_movi_tl(cpu_gpr[a->rt], a->si);
     }
     log_store_gpr(a->rt);
