@@ -78,9 +78,9 @@ $ git clone git@github.com:BinaryAnalysisPlatform/qemu.git
 Change folder to qemu and build tracer:
 ```bash
 $ cd qemu
-$ ./configure --prefix=$HOME --with-tracewrap=../bap-frames --target-list="`echo {arm,i386,x86_64,mips}-linux-user`"
-$ make
-$ make install
+$ ./configure --prefix=$HOME --with-tracewrap=<absolute-path-to>/bap-frames --target-list=<ARCH>-linux-user
+$ ninja -C build
+$ ninja -C build install
 ```
 
 # Usage
