@@ -244,7 +244,7 @@ static inline void log_load_spr(uint32_t spr, uint32_t field, TCGv val) {
     #ifdef TARGET_PPC64
     gen_helper_trace_load_spr_reg64(cpu_env, tmp0, tmp1, val);
     #else
-    if (spr == SPR_XER && field == XER_CA32) {
+    if (spr == SPR_XER && (field == XER_CA32 || XER_OV32)) {
         tcg_temp_free_i32(tmp0);
         tcg_temp_free_i32(tmp1);
         return;
@@ -266,7 +266,7 @@ static inline void log_store_spr(uint32_t spr, uint32_t field, TCGv val) {
     #ifdef TARGET_PPC64
     gen_helper_trace_store_spr_reg64(cpu_env, tmp0, tmp1, val);
     #else
-    if (spr == SPR_XER && field == XER_CA32) {
+    if (spr == SPR_XER && (field == XER_CA32 || XER_OV32)) {
         tcg_temp_free_i32(tmp0);
         tcg_temp_free_i32(tmp1);
         return;
