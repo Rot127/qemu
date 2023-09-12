@@ -4326,6 +4326,7 @@ summary_info += {'FUSE lseek':        fuse_lseek.found()}
 summary_info += {'selinux':           selinux}
 summary_info += {'libdw':             libdw}
 summary_info += {'tracewrap':         get_option('tracewrap')}
+summary_info += {'tracewrap_dir':     get_option('tracewrap_dir')}
 summary(summary_info, bool_yn: true, section: 'Dependencies')
 
 if not supported_cpus.contains(cpu)

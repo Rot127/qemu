@@ -1951,8 +1951,8 @@ if test "$skip_meson" = no; then
   test "$qemu_suffix" != qemu && meson_option_add "-Dqemu_suffix=$qemu_suffix"
   test "$smbd" != '' && meson_option_add "-Dsmbd=$smbd"
   test "$tcg" != enabled && meson_option_add "-Dtcg=$tcg"
-  test "$tracewrap" != '' && "-Dtracewrap=$tracewrap"
-  test "$tracewrap_dir" != '' && "-Dtracewrap_dir=$tracewrap_dir"
+  test "$tracewrap" != '' && meson_option_add "-Dtracewrap=$tracewrap"
+  test "$tracewrap_dir" != '' && meson_option_add "-Dtracewrap_dir=$tracewrap_dir"
   run_meson() {
     NINJA=$ninja $meson setup --prefix "$prefix" "$@" $cross_arg "$PWD" "$source_path"
   }
