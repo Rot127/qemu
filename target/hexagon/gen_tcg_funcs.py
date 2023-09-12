@@ -68,9 +68,6 @@ def genptr_decl(f, tag, regtype, regid, regno):
             f.write(
                 f"    TCGv {regtype}{regid}V = " f"hex_gpr[insn->regno[{regno}]];\n"
             )
-            f.write(
-                f"       gen_trace_load_gpr(insn->regno[{regno}], hex_gpr[insn->regno[{regno}]]);\n"
-            )
         elif regid in {"d", "e", "x", "y"}:
             genptr_decl_writable(f, tag, regtype, regid, regno)
         else:
@@ -106,9 +103,6 @@ def genptr_decl(f, tag, regtype, regid, regno):
             f.write(
                 f"    TCGv {regtype}{regid}V = hex_gpr[{regtype}{regid}N + "
                 "HEX_REG_M0];\n"
-            )
-            f.write(
-                f"       gen_trace_load_gpr({regtype}{regid}N + HEX_REG_M0, hex_gpr[{regtype}{regid}N + HEX_REG_M0]);\n"
             )
         else:
             hex_common.bad_register(regtype, regid)

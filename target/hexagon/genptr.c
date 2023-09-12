@@ -24,7 +24,6 @@
 #include "insn.h"
 #include "opcodes.h"
 #include "translate.h"
-#include "helper.h"
 #define QEMU_GENERATE       /* Used internally by macros.h */
 #include "macros.h"
 #include "mmvec/macros.h"
@@ -92,8 +91,6 @@ static TCGv_i64 get_result_gpr_pair(DisasContext *ctx, int rnum)
     TCGv_i64 result = tcg_temp_new_i64();
     tcg_gen_concat_i32_i64(result, get_result_gpr(ctx, rnum),
                                    get_result_gpr(ctx, rnum + 1));
-    gen_trace_store_gpr({regN}, hex_gpr[rnum]);
-    gen_trace_store_gpr({regN}, hex_gpr[rnum + 1]);
     return result;
 }
 
