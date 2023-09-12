@@ -8,87 +8,7 @@
 
 #include "trace_helper.h"
 
-static const char * const hexagon_prednames[] = {
-  "p0", "p1", "p2", "p3"
-};
-
-/*
- * QEMUs helper.
- */
-
-void HELPER(trace_newframe)(uint64_t pc) { qemu_trace_newframe(pc, 0); }
-
-void HELPER(trace_endframe)(CPUHexagonState *state, uint64_t pc, uint32_t pkt_size) {
-  qemu_trace_endframe(state, pc, pkt_size);
-}
-
-void HELPER(trace_load_mem)(uint32_t addr, uint32_t val, uint32_t size) {
-  qemu_log("LOAD at 0x%lx size: %d data: 0x%lx\n", (unsigned long)addr,
-           size, (unsigned long)val);
-  OperandInfo *oi = load_store_mem(addr, 0, &val, size);
-  qemu_trace_add_operand(oi, 0x1);
-}
-
-void HELPER(trace_store_mem)(uint32_t addr, uint32_t val, uint32_t size) {
-  qemu_log("STORE at 0x%lx size: %d data: 0x%lx\n", (unsigned long)addr,
-           size, (unsigned long)val);
-  OperandInfo *oi = load_store_mem(addr, 1, &val, size);
-  qemu_trace_add_operand(oi, 0x2);
-}
-
-void HELPER(trace_load_mem_i64)(uint32_t addr, uint64_t val, uint32_t size) {
-  qemu_log("LOAD at 0x%lx size: %d data: 0x%llx\n", (unsigned long)addr,
-           size, (unsigned long long)val);
-  OperandInfo *oi = load_store_mem(addr, 0, &val, size);
-  qemu_trace_add_operand(oi, 0x1);
-}
-
-void HELPER(trace_store_mem_i64)(uint32_t addr, uint64_t val, uint32_t size) {
-  qemu_log("STORE at 0x%lx size: %d data: 0x%llx\n", (unsigned long)addr,
-           size, (unsigned long long)val);
-  OperandInfo *oi = load_store_mem(addr, 1, &val, size);
-  qemu_trace_add_operand(oi, 0x2);
-}
-
-void HELPER(trace_load_gpr)(uint32_t reg, uint32_t val) {
-  OperandInfo *oi = load_store_reg(reg, val, 0);
-  qemu_trace_add_operand(oi, 0x1);
-}
-
-void HELPER(trace_store_gpr)(uint32_t reg, uint32_t val) {
-  OperandInfo *oi = load_store_reg(reg, val, 1);
-  qemu_trace_add_operand(oi, 0x2);
-}
-
-// void HELPER(trace_store_crf)(uint32_t crf, uint32_t val)
-// {
-//     OperandInfo *oi = load_store_crf(crf, val, 1);
-//     qemu_trace_add_operand(oi, 0x2);
-// }
-
-// void HELPER(trace_load_crf)(uint32_t crf, uint32_t val)
-// {
-//     OperandInfo *oi = load_store_crf(crf, val, 0);
-//     qemu_trace_add_operand(oi, 0x1);
-// }
-
-// void HELPER(trace_load_spr_reg)(CPUPPCState *env, uint32_t reg, uint32_t
-// field, uint32_t val)
-// {
-//     const char *name = get_spr_name(reg, field, env);
-//     uint32_t size = sizeof(env->spr_cb[reg].default_value);
-//     OperandInfo *oi = load_store_spr_reg(name, val, size, 0);
-//     qemu_trace_add_operand(oi, 0x1);
-// }
-
-// void HELPER(trace_store_spr_reg)(CPUPPCState *env, uint32_t reg, uint32_t
-// field, uint32_t val)
-// {
-//     const char *name = get_spr_name(reg, field, env);
-//     uint32_t size = sizeof(env->spr_cb[reg].default_value);
-//     OperandInfo *oi = load_store_spr_reg(name, val, size, 1);
-//     qemu_trace_add_operand(oi, 0x2);
-// }
+static const char *const hexagon_prednames[] = {"p0", "p1", "p2", "p3"};
 
 #ifdef BSWAP_NEEDED
 static void memcpy_rev(void *dest, const void *src, size_t size) {
@@ -181,26 +101,63 @@ OperandInfo *load_store_mem(uint64_t addr, int ls, const void *data,
   return oi;
 }
 
-OperandInfo *load_store_reg(uint32_t reg, uint32_t val, int ls) {
-  const char *name = hexagon_regnames[reg];
-  return build_load_store_reg_op(name, ls, &val, sizeof(val));
+/*
+ * QEMUs helper.
+ */
+
+void HELPER(trace_newframe)(target_ulong addr) { qemu_trace_newframe(addr, 0); }
+void HELPER(trace_endframe)(CPUHexagonState *state, target_ulong addr,
+                            uint32_t pkt_size) {
+  qemu_trace_endframe(state, addr, pkt_size);
 }
 
-OperandInfo *load_store_reg64(uint32_t reg, uint64_t val, int ls) {
-  const char *name = hexagon_regnames[reg];
-  return build_load_store_reg_op(name, ls, &val, sizeof(val));
+// Memory
+// name, return type, address, val, width
+void HELPER(trace_load_mem)(target_ulong addr, uint64_t val, uint32_t width) {
+  qemu_log("LOAD at 0x%lx width: %d data: 0x%lx\n", addr, width, val);
+  OperandInfo *oi = load_store_mem(addr, 0, &val, width);
+  qemu_trace_add_operand(oi, 0x1);
 }
 
-// OperandInfo *load_store_spr_reg(const char *name, uint64_t val, uint32_t size,
-//                                 int ls) {
-//   return build_load_store_reg_op(name, ls, &val, size);
-// }
+void HELPER(trace_store_mem)(target_ulong addr, uint64_t val, uint32_t width) {
+  qemu_log("STORE at 0x%lx width: %d data: 0x%lx\n", (unsigned long)addr, width,
+           (unsigned long)val);
+  OperandInfo *oi = load_store_mem(addr, 1, &val, width);
+  qemu_trace_add_operand(oi, 0x2);
+}
 
-// void trace_dcbz(CPUPPCState *state, uint64_t addr) {
-//   qemu_log("Clear cache at 0x%lx size: %d data: 0x%llx\n", (unsigned long)addr,
-//            memop_size(state->dcache_line_size), (unsigned long long)0);
-//   char *val = calloc(state->dcache_line_size, 1);
-//   OperandInfo *oi = load_store_mem(addr, 1, val, state->dcache_line_size);
-//   qemu_trace_add_operand(oi, 0x2);
-//   free(val);
-// }
+// GPRs
+// name, return type, reg, val, is_tmp
+void HELPER(trace_load_reg)(uint32_t reg, target_ulong val, uint32_t is_tmp) {
+  // OperandInfo *oi = load_store_reg(reg, val, 0);
+  // qemu_trace_add_operand(oi, 0x1);
+}
+
+void HELPER(trace_store_reg)(uint32_t reg, target_ulong val, uint32_t is_tmp) {
+  // OperandInfo *oi = load_store_reg(reg, val, 1);
+  // qemu_trace_add_operand(oi, 0x2);
+}
+
+// VRegs
+// name, return type, vreg, val, is_tmp
+void HELPER(trace_load_vreg)(uint32_t vreg, void *val, uint32_t is_tmp) {}
+void HELPER(trace_store_vreg)(uint32_t vreg, void *val, uint32_t is_tmp) {}
+
+// Predicates
+// name, return type, pred reg, val, is_tmp
+void HELPER(trace_load_pred)(uint32_t pred, target_ulong val, uint32_t is_tmp) {
+}
+void HELPER(trace_store_pred)(uint32_t pred, target_ulong val,
+                              uint32_t is_tmp) {}
+
+void HELPER(trace_load_vpred)(uint32_t vpred, void *val, uint32_t is_tmp) {}
+void HELPER(trace_store_vpred)(uint32_t vpred, void *val, uint32_t is_tmp) {}
+
+// special registers (USR etc.)
+// name, return type, ctrl reg, reg field, value, is_tmp
+void HELPER(trace_store_ctrl)(uint32_t creg, uint32_t field, target_ulong val,
+                              uint32_t is_tmp) {}
+void HELPER(trace_load_ctrl)(uint32_t creg, uint32_t field, target_ulong val,
+                             uint32_t is_tmp) {}
+
+void HELPER(trace_store_gpr)(uint32_t reg, uint32_t val) {}

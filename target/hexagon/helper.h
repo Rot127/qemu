@@ -114,8 +114,8 @@ DEF_HELPER_2(probe_pkt_scalar_hvx_stores, void, env, int)
 #ifdef HAS_TRACEWRAP
 // Frames
 // name, return type, (CPU env), address
-DEF_HELPER_1(trace_newframe, void, i64)
-DEF_HELPER_2(trace_endframe, void, env, i64)
+DEF_HELPER_1(trace_newframe, void, target_ulong)
+DEF_HELPER_2(trace_endframe, void, env, target_ulong, i32)
 
 // Memory
 // name, return type, address, val, width
