@@ -1,14 +1,6 @@
-#include "cpu.h"
-#include "exec/helper-proto.h"
-#include "exec/memop.h"
-#include "qemu/log.h"
 #include "tracewrap.h"
 
-#include "internal.h"
-
 #include "trace_helper.h"
-
-static const char *const hexagon_prednames[] = {"p0", "p1", "p2", "p3"};
 
 #ifdef BSWAP_NEEDED
 static void memcpy_rev(void *dest, const void *src, size_t size) {
@@ -38,37 +30,37 @@ static void memcpy_rev(void *dest, const void *src, size_t size) {
  * data_size Size of the data in bytes. \return OperandInfo* Pointer to the
  * operand for a BAP frame.
  */
-static OperandInfo *build_load_store_reg_op(const char *name, int ls,
-                                            const void *data,
-                                            size_t data_size) {
-  RegOperand *ro = g_new(RegOperand, 1);
-  reg_operand__init(ro);
-  ro->name = strdup(name);
+// static OperandInfo *build_load_store_reg_op(const char *name, int ls,
+//                                             const void *data,
+//                                             size_t data_size) {
+//   RegOperand *ro = g_new(RegOperand, 1);
+//   reg_operand__init(ro);
+//   ro->name = strdup(name);
 
-  OperandInfoSpecific *ois = g_new(OperandInfoSpecific, 1);
-  operand_info_specific__init(ois);
-  ois->reg_operand = ro;
+//   OperandInfoSpecific *ois = g_new(OperandInfoSpecific, 1);
+//   operand_info_specific__init(ois);
+//   ois->reg_operand = ro;
 
-  OperandUsage *ou = g_new(OperandUsage, 1);
-  operand_usage__init(ou);
-  if (ls == 0) {
-    ou->read = 1;
-  } else {
-    ou->written = 1;
-  }
-  OperandInfo *oi = g_new(OperandInfo, 1);
-  operand_info__init(oi);
-  oi->bit_length = 0;
-  oi->operand_info_specific = ois;
-  oi->operand_usage = ou;
-  oi->value.len = data_size;
-  oi->value.data = g_malloc(oi->value.len);
-  memcpy(oi->value.data, data, data_size);
+//   OperandUsage *ou = g_new(OperandUsage, 1);
+//   operand_usage__init(ou);
+//   if (ls == 0) {
+//     ou->read = 1;
+//   } else {
+//     ou->written = 1;
+//   }
+//   OperandInfo *oi = g_new(OperandInfo, 1);
+//   operand_info__init(oi);
+//   oi->bit_length = 0;
+//   oi->operand_info_specific = ois;
+//   oi->operand_usage = ou;
+//   oi->value.len = data_size;
+//   oi->value.data = g_malloc(oi->value.len);
+//   memcpy(oi->value.data, data, data_size);
 
-  return oi;
-}
+//   return oi;
+// }
 
-OperandInfo *load_store_mem(uint64_t addr, int ls, const void *data,
+static OperandInfo *build_load_store_mem(uint64_t addr, int ls, const void *data,
                             size_t data_size) {
   MemOperand *mo = g_new(MemOperand, 1);
   mem_operand__init(mo);
@@ -114,15 +106,15 @@ void HELPER(trace_endframe)(CPUHexagonState *state, target_ulong addr,
 // Memory
 // name, return type, address, val, width
 void HELPER(trace_load_mem)(target_ulong addr, uint64_t val, uint32_t width) {
-  qemu_log("LOAD at 0x%lx width: %d data: 0x%lx\n", addr, width, val);
-  OperandInfo *oi = load_store_mem(addr, 0, &val, width);
+  qemu_log("LOAD at 0x%x width: %d data: 0x%lx\n", addr, width, val);
+  OperandInfo *oi = build_load_store_mem(addr, 0, &val, width);
   qemu_trace_add_operand(oi, 0x1);
 }
 
 void HELPER(trace_store_mem)(target_ulong addr, uint64_t val, uint32_t width) {
   qemu_log("STORE at 0x%lx width: %d data: 0x%lx\n", (unsigned long)addr, width,
            (unsigned long)val);
-  OperandInfo *oi = load_store_mem(addr, 1, &val, width);
+  OperandInfo *oi = build_load_store_mem(addr, 1, &val, width);
   qemu_trace_add_operand(oi, 0x2);
 }
 
@@ -130,7 +122,7 @@ void HELPER(trace_store_mem)(target_ulong addr, uint64_t val, uint32_t width) {
 // name, return type, reg, val, is_tmp
 void HELPER(trace_load_reg)(uint32_t reg, target_ulong val, uint32_t is_tmp) {
   qemu_log("LOAD REG %d Val: 0x%x TMP: %d\n", reg, val, is_tmp);
-  // OperandInfo *oi = load_store_reg(reg, val, 0);
+  // OperandInfo *oi = build_load_store_reg_op(reg, val, 0, is_tmp);
   // qemu_trace_add_operand(oi, 0x1);
 }
 
