@@ -129,35 +129,53 @@ void HELPER(trace_store_mem)(target_ulong addr, uint64_t val, uint32_t width) {
 // GPRs
 // name, return type, reg, val, is_tmp
 void HELPER(trace_load_reg)(uint32_t reg, target_ulong val, uint32_t is_tmp) {
+  qemu_log("LOAD REG %d Val: 0x%x TMP: %d\n", reg, val, is_tmp);
   // OperandInfo *oi = load_store_reg(reg, val, 0);
   // qemu_trace_add_operand(oi, 0x1);
 }
 
 void HELPER(trace_store_reg)(uint32_t reg, target_ulong val, uint32_t is_tmp) {
+  qemu_log("STORE REG %d Val: 0x%x TMP: %d\n", reg, val, is_tmp);
   // OperandInfo *oi = load_store_reg(reg, val, 1);
   // qemu_trace_add_operand(oi, 0x2);
 }
 
 // VRegs
 // name, return type, vreg, val, is_tmp
-void HELPER(trace_load_vreg)(uint32_t vreg, void *val, uint32_t is_tmp) {}
-void HELPER(trace_store_vreg)(uint32_t vreg, void *val, uint32_t is_tmp) {}
+void HELPER(trace_load_vreg)(uint32_t vreg, void *val, uint32_t is_tmp) {
+  qemu_log("LOAD VREG %d Val: %p TMP: %d\n", vreg, val, is_tmp);
+}
+
+void HELPER(trace_store_vreg)(uint32_t vreg, void *val, uint32_t is_tmp) {
+  qemu_log("STORE VREG %d Val: %p TMP: %d\n", vreg, val, is_tmp);
+}
 
 // Predicates
 // name, return type, pred reg, val, is_tmp
 void HELPER(trace_load_pred)(uint32_t pred, target_ulong val, uint32_t is_tmp) {
+  qemu_log("LOAD PRED %d Val: 0x%x TMP: %d\n", pred, val, is_tmp);
 }
-void HELPER(trace_store_pred)(uint32_t pred, target_ulong val,
-                              uint32_t is_tmp) {}
 
-void HELPER(trace_load_vpred)(uint32_t vpred, void *val, uint32_t is_tmp) {}
-void HELPER(trace_store_vpred)(uint32_t vpred, void *val, uint32_t is_tmp) {}
+void HELPER(trace_store_pred)(uint32_t pred, target_ulong val,
+                              uint32_t is_tmp) {
+  qemu_log("STORE PRED %d Val: 0x%x TMP: %d\n", pred, val, is_tmp);
+}
+
+void HELPER(trace_load_vpred)(uint32_t vpred, void *val, uint32_t is_tmp) {
+  qemu_log("LOAD VPRED %d Val: %p TMP: %d\n", vpred, val, is_tmp);
+}
+
+void HELPER(trace_store_vpred)(uint32_t vpred, void *val, uint32_t is_tmp) {
+  qemu_log("STORE VPRED %d Val: %p TMP: %d\n", vpred, val, is_tmp);
+}
 
 // special registers (USR etc.)
 // name, return type, ctrl reg, reg field, value, is_tmp
 void HELPER(trace_store_ctrl)(uint32_t creg, uint32_t field, target_ulong val,
-                              uint32_t is_tmp) {}
+                              uint32_t is_tmp) {
+  qemu_log("STORE CTRL REG: %d FIELD: %d Val: 0x%x TMP: %d\n", creg, field, val, is_tmp);
+}
 void HELPER(trace_load_ctrl)(uint32_t creg, uint32_t field, target_ulong val,
-                             uint32_t is_tmp) {}
-
-void HELPER(trace_store_gpr)(uint32_t reg, uint32_t val) {}
+                             uint32_t is_tmp) {
+  qemu_log("LOAD CTRL REG: %d FIELD: %d Val: 0x%x TMP: %d\n", creg, field, val, is_tmp);
+}
