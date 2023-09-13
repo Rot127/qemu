@@ -155,6 +155,7 @@ static void gen_end_tb(DisasContext *ctx)
 {
     Packet *pkt = ctx->pkt;
 
+    gen_helper_trace_endframe(cpu_env, tcg_constant_tl(pkt->pc), tcg_constant_i32(pkt->num_insns));
     gen_exec_counters(ctx);
 
     if (ctx->branch_cond != TCG_COND_NEVER) {
@@ -188,6 +189,7 @@ static void gen_end_tb(DisasContext *ctx)
 
 static void gen_exception_end_tb(DisasContext *ctx, int excp)
 {
+    gen_helper_trace_endframe(cpu_env, tcg_constant_tl(ctx->base.pc_next), tcg_constant_i32(0));
     gen_exec_counters(ctx);
     tcg_gen_movi_tl(hex_gpr[HEX_REG_PC], ctx->next_PC);
     gen_exception_raw(excp);
@@ -1028,6 +1030,7 @@ static void decode_and_translate_packet(CPUHexagonState *env, DisasContext *ctx)
     Packet pkt;
     int i;
 
+    gen_helper_trace_newframe(tcg_constant_tl(ctx->base.pc_next));
     nwords = read_packet_words(env, ctx, words);
     if (!nwords) {
         gen_exception_end_tb(ctx, HEX_EXCP_INVALID_PACKET);
@@ -1045,6 +1048,7 @@ static void decode_and_translate_packet(CPUHexagonState *env, DisasContext *ctx)
         }
         gen_commit_packet(ctx);
         ctx->base.pc_next += pkt.encod_pkt_size_in_bytes;
+        gen_helper_trace_endframe(cpu_env, tcg_constant_tl(pkt.pc), tcg_constant_i32(pkt.num_insns));
     } else {
         gen_exception_end_tb(ctx, HEX_EXCP_INVALID_PACKET);
     }
