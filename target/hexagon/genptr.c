@@ -79,11 +79,9 @@ TCGv get_result_gpr(DisasContext *ctx, int rnum)
                 ctx->new_value[rnum] = tcg_temp_new();
                 tcg_gen_movi_tl(ctx->new_value[rnum], 0);
             }
-            gen_helper_trace_load_reg(tcg_constant_i32(rnum), ctx->new_value[rnum], tcg_constant_i32(true));
             return ctx->new_value[rnum];
         }
     } else {
-        gen_helper_trace_load_reg(tcg_constant_i32(rnum), hex_gpr[rnum], tcg_constant_i32(false));
         return hex_gpr[rnum];
     }
 }
