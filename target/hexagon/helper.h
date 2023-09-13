@@ -119,8 +119,10 @@ DEF_HELPER_3(trace_endframe, void, env, tl, i32)
 
 // Memory
 // name, return type, address, val, width
-DEF_HELPER_3(trace_load_mem, void, tl, i64, i32)
-DEF_HELPER_3(trace_store_mem, void, tl, i64, i32)
+DEF_HELPER_3(trace_load_mem, void, tl, tl, i32)
+DEF_HELPER_3(trace_store_mem, void, tl, tl, i32)
+DEF_HELPER_3(trace_load_mem_64, void, tl, i64, i32)
+DEF_HELPER_3(trace_store_mem_64, void, tl, i64, i32)
 
 // GPRs
 // name, return type, reg, val, (load_new)
