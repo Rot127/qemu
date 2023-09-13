@@ -39,13 +39,6 @@ def genptr_decl_pair_writable(f, tag, regtype, regid, regno):
     else:
         hex_common.bad_register(regtype, regid)
     f.write(f"    TCGv_i64 {regtype}{regid}V = " f"get_result_gpr_pair(ctx, {regN});\n")
-    f.write(
-        f"    gen_helper_trace_load_reg_pair(tcg_constant_i32(insn->regno["
-    )
-    if regtype == "C":
-        f.write(f"{regno}] + HEX_REG_SA0), {regtype}{regid}V, tcg_constant_i32(false));\n")
-    else:
-        f.write(f"{regno}]), {regtype}{regid}V, tcg_constant_i32(false));\n")
 
 
 def genptr_decl_writable(f, tag, regtype, regid, regno):
@@ -61,13 +54,6 @@ def genptr_decl_writable(f, tag, regtype, regid, regno):
         f.write(f"    TCGv {regtype}{regid}V = tcg_temp_new();\n")
     else:
         hex_common.bad_register(regtype, regid)
-    f.write(
-        f"    gen_helper_trace_load_reg(tcg_constant_i32(insn->regno["
-    )
-    if regtype == "C":
-        f.write(f"{regno}] + HEX_REG_SA0), {regtype}{regid}V, tcg_constant_i32(false));\n")
-    else:
-        f.write(f"{regno}]), {regtype}{regid}V, tcg_constant_i32(false));\n")
 
 
 def genptr_decl(f, tag, regtype, regid, regno):
@@ -94,6 +80,9 @@ def genptr_decl(f, tag, regtype, regid, regno):
             f.write(
                 f"    TCGv {regtype}{regid}V = " f"hex_pred[insn->regno[{regno}]];\n"
             )
+            f.write(
+                f"    gen_helper_trace_load_pred(tcg_constant_i32(insn->regno[{regno}]), {regtype}{regid}V, tcg_constant_i32(false));\n"
+                )
         elif regid in {"d", "e", "x"}:
             genptr_decl_writable(f, tag, regtype, regid, regno)
         else:
@@ -121,6 +110,9 @@ def genptr_decl(f, tag, regtype, regid, regno):
                 f"    TCGv {regtype}{regid}V = hex_gpr[{regtype}{regid}N + "
                 "HEX_REG_M0];\n"
             )
+            f.write(
+                f"    gen_helper_trace_load_reg(tcg_constant_i32({regtype}{regid}N + HEX_REG_M0), {regtype}{regid}V, tcg_constant_i32(false));\n"
+                )
         else:
             hex_common.bad_register(regtype, regid)
     elif regtype == "V":
@@ -217,6 +209,9 @@ def genptr_decl_new(f, tag, regtype, regid, regno):
                 f"    TCGv {regtype}{regid}N = "
                 f"ctx->new_pred_value[insn->regno[{regno}]];\n"
             )
+            f.write(
+                f"    gen_helper_trace_load_pred(tcg_constant_i32(insn->regno[{regno}]), {regtype}{regid}N, tcg_constant_i32(true));\n"
+                )
         else:
             hex_common.bad_register(regtype, regid)
     elif regtype == "O":
@@ -273,6 +268,9 @@ def genptr_src_read(f, tag, regtype, regid):
                 f"                                 hex_gpr[{regtype}"
                 f"{regid}N + 1]);\n"
             )
+            f.write(
+                f"    gen_helper_trace_load_reg_pair(tcg_constant_i32({regtype}{regid}N), {regtype}{regid}V, tcg_constant_i32(false));\n"
+                )
         elif regid in {"x", "y"}:
             ## For read/write registers, we need to get the original value into
             ## the result TCGv.  For conditional instructions, this is done in
@@ -282,6 +280,9 @@ def genptr_src_read(f, tag, regtype, regid):
                     f"    tcg_gen_mov_tl({regtype}{regid}V, "
                     f"hex_gpr[{regtype}{regid}N]);\n"
                 )
+                f.write(
+                    f"    gen_helper_trace_load_reg(tcg_constant_i32({regtype}{regid}N), {regtype}{regid}V, tcg_constant_i32(false));\n"
+                    )
         elif regid not in {"s", "t", "u", "v"}:
             hex_common.bad_register(regtype, regid)
     elif regtype == "P":
@@ -290,9 +291,13 @@ def genptr_src_read(f, tag, regtype, regid):
                 f"    tcg_gen_mov_tl({regtype}{regid}V, "
                 f"hex_pred[{regtype}{regid}N]);\n"
             )
+            f.write(
+                f"    gen_helper_trace_load_pred(tcg_constant_i32({regtype}{regid}N), {regtype}{regid}V, tcg_constant_i32(false));\n"
+                )
         elif regid not in {"s", "t", "u", "v"}:
             hex_common.bad_register(regtype, regid)
     elif regtype == "C":
+        # BAP tracing: Done in gen_read_ctrl_reg_...
         if regid == "ss":
             f.write(
                 f"    gen_read_ctrl_reg_pair(ctx, {regtype}{regid}N, "
@@ -404,6 +409,7 @@ def gen_helper_call_imm(f, immlett):
 
 
 def genptr_dst_write_pair(f, tag, regtype, regid):
+    # BAP tracing: Done in gen_log_reg_write_pair
     f.write(f"    gen_log_reg_write_pair(ctx, {regtype}{regid}N, "
             f"{regtype}{regid}V);\n")
 
