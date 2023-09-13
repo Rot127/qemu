@@ -124,8 +124,10 @@ DEF_HELPER_3(trace_store_mem, void, tl, i64, i32)
 
 // GPRs
 // name, return type, reg, val, is_tmp
-DEF_HELPER_3(trace_load_reg, void, i32, tl, i32)
-DEF_HELPER_3(trace_store_reg, void, i32, tl, i32)
+DEF_HELPER_3(trace_load_reg, void, i32, i32, i32)
+DEF_HELPER_3(trace_store_reg, void, i32, i32, i32)
+DEF_HELPER_3(trace_load_reg_pair, void, i32, i64, i32)
+DEF_HELPER_3(trace_store_reg_pair, void, i32, i64, i32)
 
 // VRegs
 // name, return type, vreg, val, is_tmp

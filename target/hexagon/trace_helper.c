@@ -97,9 +97,13 @@ static OperandInfo *build_load_store_mem(uint64_t addr, int ls, const void *data
  * QEMUs helper.
  */
 
-void HELPER(trace_newframe)(target_ulong addr) { qemu_trace_newframe(addr, 0); }
+void HELPER(trace_newframe)(target_ulong addr) {
+  qemu_log("FRAME BEGIN at 0x%x\n", addr);
+  qemu_trace_newframe(addr, 0);
+}
 void HELPER(trace_endframe)(CPUHexagonState *state, target_ulong addr,
                             uint32_t pkt_size) {
+  qemu_log("FRAME END at 0x%x size: %d\n", addr, pkt_size);
   qemu_trace_endframe(state, addr, pkt_size);
 }
 
@@ -120,14 +124,26 @@ void HELPER(trace_store_mem)(target_ulong addr, uint64_t val, uint32_t width) {
 
 // GPRs
 // name, return type, reg, val, is_tmp
-void HELPER(trace_load_reg)(uint32_t reg, target_ulong val, uint32_t is_tmp) {
+void HELPER(trace_load_reg)(uint32_t reg, uint32_t val, uint32_t is_tmp) {
   qemu_log("LOAD REG %d Val: 0x%x TMP: %d\n", reg, val, is_tmp);
   // OperandInfo *oi = build_load_store_reg_op(reg, val, 0, is_tmp);
   // qemu_trace_add_operand(oi, 0x1);
 }
 
-void HELPER(trace_store_reg)(uint32_t reg, target_ulong val, uint32_t is_tmp) {
+void HELPER(trace_store_reg)(uint32_t reg, uint32_t val, uint32_t is_tmp) {
   qemu_log("STORE REG %d Val: 0x%x TMP: %d\n", reg, val, is_tmp);
+  // OperandInfo *oi = load_store_reg(reg, val, 1);
+  // qemu_trace_add_operand(oi, 0x2);
+}
+
+void HELPER(trace_load_reg_pair)(uint32_t reg, uint64_t val, uint32_t is_tmp) {
+  qemu_log("LOAD REG %d Val: 0x%lx TMP: %d\n", reg, val, is_tmp);
+  // OperandInfo *oi = build_load_store_reg_op(reg, val, 0, is_tmp);
+  // qemu_trace_add_operand(oi, 0x1);
+}
+
+void HELPER(trace_store_reg_pair)(uint32_t reg, uint64_t val, uint32_t is_tmp) {
+  qemu_log("STORE REG %d Val: 0x%lx TMP: %d\n", reg, val, is_tmp);
   // OperandInfo *oi = load_store_reg(reg, val, 1);
   // qemu_trace_add_operand(oi, 0x2);
 }

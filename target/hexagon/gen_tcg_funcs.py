@@ -39,6 +39,13 @@ def genptr_decl_pair_writable(f, tag, regtype, regid, regno):
     else:
         hex_common.bad_register(regtype, regid)
     f.write(f"    TCGv_i64 {regtype}{regid}V = " f"get_result_gpr_pair(ctx, {regN});\n")
+    f.write(
+        f"    gen_helper_trace_load_reg_pair(tcg_constant_i32(insn->regno["
+    )
+    if regtype == "C":
+        f.write(f"{regno}] + HEX_REG_SA0), {regtype}{regid}V, tcg_constant_i32(false));\n")
+    else:
+        f.write(f"{regno}]), {regtype}{regid}V, tcg_constant_i32(false));\n")
 
 
 def genptr_decl_writable(f, tag, regtype, regid, regno):
@@ -54,6 +61,13 @@ def genptr_decl_writable(f, tag, regtype, regid, regno):
         f.write(f"    TCGv {regtype}{regid}V = tcg_temp_new();\n")
     else:
         hex_common.bad_register(regtype, regid)
+    f.write(
+        f"    gen_helper_trace_load_reg(tcg_constant_i32(insn->regno["
+    )
+    if regtype == "C":
+        f.write(f"{regno}] + HEX_REG_SA0), {regtype}{regid}V, tcg_constant_i32(false));\n")
+    else:
+        f.write(f"{regno}]), {regtype}{regid}V, tcg_constant_i32(false));\n")
 
 
 def genptr_decl(f, tag, regtype, regid, regno):
@@ -67,6 +81,9 @@ def genptr_decl(f, tag, regtype, regid, regno):
         elif regid in {"s", "t", "u", "v"}:
             f.write(
                 f"    TCGv {regtype}{regid}V = " f"hex_gpr[insn->regno[{regno}]];\n"
+            )
+            f.write(
+                f"    gen_helper_trace_load_reg(tcg_constant_i32(insn->regno[{regno}]), {regtype}{regid}V, tcg_constant_i32(false));\n"
             )
         elif regid in {"d", "e", "x", "y"}:
             genptr_decl_writable(f, tag, regtype, regid, regno)
