@@ -425,6 +425,7 @@ void gen_store32(TCGv vaddr, TCGv src, int width, uint32_t slot)
     tcg_gen_mov_tl(hex_store_addr[slot], vaddr);
     tcg_gen_movi_tl(hex_store_width[slot], width);
     tcg_gen_mov_tl(hex_store_val32[slot], src);
+    gen_helper_trace_store_mem(vaddr, src, tcg_constant_i32(width));
 }
 
 void gen_store1(TCGv_env cpu_env, TCGv vaddr, TCGv src, uint32_t slot)
@@ -465,6 +466,7 @@ void gen_store8(TCGv_env cpu_env, TCGv vaddr, TCGv_i64 src, uint32_t slot)
     tcg_gen_mov_tl(hex_store_addr[slot], vaddr);
     tcg_gen_movi_tl(hex_store_width[slot], 8);
     tcg_gen_mov_i64(hex_store_val64[slot], src);
+    gen_helper_trace_store_mem_64(vaddr, src, tcg_constant_i32(8));
 }
 
 void gen_store8i(TCGv_env cpu_env, TCGv vaddr, int64_t src, uint32_t slot)
