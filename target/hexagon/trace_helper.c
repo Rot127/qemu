@@ -15,6 +15,23 @@ static void memcpy_rev(void *dest, const void *src, size_t size) {
 }
 #endif
 
+// Copies from genptr
+
+const char * const hex_regnames[TOTAL_PER_THREAD_REGS] = {
+   "r0", "r1",  "r2",  "r3",  "r4",   "r5",  "r6",  "r7",
+   "r8", "r9",  "r10", "r11", "r12",  "r13", "r14", "r15",
+  "r16", "r17", "r18", "r19", "r20",  "r21", "r22", "r23",
+  "r24", "r25", "r26", "r27", "r28",  "r29", "r30", "r31",
+  "sa0", "lc0", "sa1", "lc1", "p3_0", "c5",  "m0",  "m1",
+  "usr", "pc",  "ugp", "gp",  "cs0",  "cs1", "c14", "c15",
+  "c16", "c17", "c18", "c19", "pkt_cnt",  "insn_cnt", "hvx_cnt", "c23",
+  "c24", "c25", "c26", "c27", "c28",  "c29", "c30", "c31",
+};
+
+static const char * const hexagon_prednames[] = {
+  "p0", "p1", "p2", "p3"
+};
+
 /*
  * Build frames
  *
@@ -138,37 +155,37 @@ void HELPER(trace_store_mem_64)(target_ulong addr, uint64_t val, uint32_t width)
 // GPRs
 // name, return type, reg, val, load_new
 void HELPER(trace_load_reg)(uint32_t reg, uint32_t val) {
-  qemu_log("TRACE \tLOAD REG %d Val: 0x%x\n", reg, val);
+  qemu_log("TRACE \tLOAD REG %s Val: 0x%x\n", hexagon_regnames[reg], val);
   // OperandInfo *oi = build_load_store_reg_op(reg, val, 0, load_new);
   // qemu_trace_add_operand(oi, 0x1);
 }
 
 void HELPER(trace_load_reg_new)(uint32_t reg, uint32_t val) {
-  qemu_log("TRACE \tLOAD REG NEW %d Val: 0x%x\n", reg, val);
+  qemu_log("TRACE \tLOAD REG NEW %s Val: 0x%x\n", hexagon_regnames[reg], val);
   // OperandInfo *oi = build_load_store_reg_op(reg, val, 0, load_new);
   // qemu_trace_add_operand(oi, 0x1);
 }
 
 void HELPER(trace_store_reg)(uint32_t reg, uint32_t val) {
-  qemu_log("TRACE \tSTORE REG %d Val: 0x%x\n", reg, val);
+  qemu_log("TRACE \tSTORE REG %s Val: 0x%x\n", hexagon_regnames[reg], val);
   // OperandInfo *oi = load_store_reg(reg, val, 1);
   // qemu_trace_add_operand(oi, 0x2);
 }
 
 void HELPER(trace_load_reg_pair)(uint32_t reg, uint64_t val) {
-  qemu_log("TRACE \tLOAD REG %d Val: 0x%lx\n", reg, val);
+  qemu_log("TRACE \tLOAD REG %s:%s Val: 0x%lx\n", hexagon_regnames[reg+1], &hexagon_regnames[reg][1], val);
   // OperandInfo *oi = build_load_store_reg_op(reg, val, 0, load_new);
   // qemu_trace_add_operand(oi, 0x1);
 }
 
 void HELPER(trace_load_reg_pair_new)(uint32_t reg, uint64_t val) {
-  qemu_log("TRACE \tLOAD REG NEW %d Val: 0x%lx\n", reg, val);
+  qemu_log("TRACE \tLOAD REG NEW %s:%s Val: 0x%lx\n", hexagon_regnames[reg+1], &hexagon_regnames[reg][1], val);
   // OperandInfo *oi = build_load_store_reg_op(reg, val, 0, load_new);
   // qemu_trace_add_operand(oi, 0x1);
 }
 
 void HELPER(trace_store_reg_pair)(uint32_t reg, uint64_t val) {
-  qemu_log("TRACE \tSTORE REG %d Val: 0x%lx\n", reg, val);
+  qemu_log("TRACE \tSTORE REG %s:%s Val: 0x%lx\n", hexagon_regnames[reg+1], &hexagon_regnames[reg][1], val);
   // OperandInfo *oi = load_store_reg(reg, val, 1);
   // qemu_trace_add_operand(oi, 0x2);
 }
@@ -190,15 +207,15 @@ void HELPER(trace_store_vreg)(uint32_t vreg, void *val) {
 // Predicates
 // name, return type, pred reg, val, load_new
 void HELPER(trace_load_pred)(uint32_t pred, target_ulong val) {
-  qemu_log("TRACE \tLOAD PRED %d Val: 0x%x\n", pred, val);
+  qemu_log("TRACE \tLOAD PRED %s Val: 0x%x\n", hexagon_prednames[pred], val);
 }
 
 void HELPER(trace_load_pred_new)(uint32_t pred, target_ulong val) {
-  qemu_log("TRACE \tLOAD PRED NEW: %d Val: 0x%x\n", pred, val);
+  qemu_log("TRACE \tLOAD PRED NEW: %s Val: 0x%x\n", hexagon_prednames[pred], val);
 }
 
 void HELPER(trace_store_pred)(uint32_t pred, target_ulong val) {
-  qemu_log("TRACE \tSTORE PRED: %d Val: 0x%x\n", pred, val);
+  qemu_log("TRACE \tSTORE PRED: %s Val: 0x%x\n", hexagon_prednames[pred], val);
 }
 
 void HELPER(trace_load_vpred)(uint32_t vpred, void *val) {
