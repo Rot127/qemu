@@ -126,22 +126,28 @@ DEF_HELPER_3(trace_store_mem_64, void, tl, i64, i32)
 
 // GPRs
 // name, return type, reg, val, (load_new)
-DEF_HELPER_3(trace_load_reg, void, i32, i32, i32)
+DEF_HELPER_2(trace_load_reg, void, i32, i32)
+DEF_HELPER_2(trace_load_reg_new, void, i32, i32)
 DEF_HELPER_2(trace_store_reg, void, i32, i32)
-DEF_HELPER_3(trace_load_reg_pair, void, i32, i64, i32)
+
+DEF_HELPER_2(trace_load_reg_pair, void, i32, i64)
+DEF_HELPER_2(trace_load_reg_pair_new, void, i32, i64)
 DEF_HELPER_2(trace_store_reg_pair, void, i32, i64)
 
 // VRegs
 // name, return type, vreg, val, load_new
-DEF_HELPER_3(trace_load_vreg, void, i32, ptr, i32)
+DEF_HELPER_2(trace_load_vreg, void, i32, ptr)
+DEF_HELPER_2(trace_load_vreg_new, void, i32, ptr)
 DEF_HELPER_2(trace_store_vreg, void, i32, ptr)
 
 // Predicates
 // name, return type, pred reg, val, load_new
-DEF_HELPER_3(trace_load_pred, void, i32, tl, i32)
+DEF_HELPER_2(trace_load_pred, void, i32, tl)
+DEF_HELPER_2(trace_load_pred_new, void, i32, tl)
 DEF_HELPER_2(trace_store_pred, void, i32, tl)
 
-DEF_HELPER_3(trace_load_vpred, void, i32, ptr, i32)
+DEF_HELPER_2(trace_load_vpred, void, i32, ptr)
+DEF_HELPER_2(trace_load_vpred_new, void, i32, ptr)
 DEF_HELPER_2(trace_store_vpred, void, i32, ptr)
 
 #endif /* HAS_TRACEWRAP */

@@ -41,7 +41,7 @@ def genptr_decl_pair_writable(f, tag, regtype, regid, regno):
     f.write(f"    TCGv_i64 {regtype}{regid}V = " f"get_result_gpr_pair(ctx, {regN});\n")
     if regid in ["x", "y"]:
         f.write(
-            f"    gen_helper_trace_load_reg_pair(tcg_constant_i32({regN}), {regtype}{regid}V, tcg_constant_i32(true));\n"
+            f"    gen_helper_trace_load_reg_pair_new(tcg_constant_i32({regN}), {regtype}{regid}V);\n"
             )
 
 
@@ -52,21 +52,21 @@ def genptr_decl_writable(f, tag, regtype, regid, regno):
         f.write(f"    TCGv {regtype}{regid}V = get_result_gpr(ctx, {regN});\n")
         if regid in ["x", "y"]:
             f.write(
-                f"    gen_helper_trace_load_reg(tcg_constant_i32({regN}), {regtype}{regid}V, tcg_constant_i32(false));\n"
+                f"    gen_helper_trace_load_reg(tcg_constant_i32({regN}), {regtype}{regid}V);\n"
                 )
     elif regtype == "C":
         f.write(f"    const int {regN} = insn->regno[{regno}] + HEX_REG_SA0;\n")
         f.write(f"    TCGv {regtype}{regid}V = get_result_gpr(ctx, {regN});\n")
         if regid in ["x", "y"]:
             f.write(
-                f"    gen_helper_trace_load_reg(tcg_constant_i32({regN}), {regtype}{regid}V, tcg_constant_i32(false));\n"
+                f"    gen_helper_trace_load_reg(tcg_constant_i32({regN}), {regtype}{regid}V);\n"
                 )
     elif regtype == "P":
         f.write(f"    const int {regN} = insn->regno[{regno}];\n")
         f.write(f"    TCGv {regtype}{regid}V = tcg_temp_new();\n")
         if regid in ["x", "y"]:
             f.write(
-                f"    gen_helper_trace_load_pred(tcg_constant_i32({regN}), {regtype}{regid}V, tcg_constant_i32(false));\n"
+                f"    gen_helper_trace_load_pred(tcg_constant_i32({regN}), {regtype}{regid}V);\n"
                 )
     else:
         hex_common.bad_register(regtype, regid)
@@ -85,7 +85,7 @@ def genptr_decl(f, tag, regtype, regid, regno):
                 f"    TCGv {regtype}{regid}V = " f"hex_gpr[insn->regno[{regno}]];\n"
             )
             f.write(
-                f"    gen_helper_trace_load_reg(tcg_constant_i32(insn->regno[{regno}]), {regtype}{regid}V, tcg_constant_i32(false));\n"
+                f"    gen_helper_trace_load_reg(tcg_constant_i32(insn->regno[{regno}]), {regtype}{regid}V);\n"
             )
         elif regid in {"d", "e", "x", "y"}:
             genptr_decl_writable(f, tag, regtype, regid, regno)
@@ -97,7 +97,7 @@ def genptr_decl(f, tag, regtype, regid, regno):
                 f"    TCGv {regtype}{regid}V = " f"hex_pred[insn->regno[{regno}]];\n"
             )
             f.write(
-                f"    gen_helper_trace_load_pred(tcg_constant_i32(insn->regno[{regno}]), {regtype}{regid}V, tcg_constant_i32(false));\n"
+                f"    gen_helper_trace_load_pred(tcg_constant_i32(insn->regno[{regno}]), {regtype}{regid}V);\n"
                 )
         elif regid in {"d", "e", "x"}:
             genptr_decl_writable(f, tag, regtype, regid, regno)
@@ -127,7 +127,7 @@ def genptr_decl(f, tag, regtype, regid, regno):
                 "HEX_REG_M0];\n"
             )
             f.write(
-                f"    gen_helper_trace_load_reg(tcg_constant_i32({regtype}{regid}N + HEX_REG_M0), {regtype}{regid}V, tcg_constant_i32(false));\n"
+                f"    gen_helper_trace_load_reg(tcg_constant_i32({regtype}{regid}N + HEX_REG_M0), {regtype}{regid}V);\n"
                 )
         else:
             hex_common.bad_register(regtype, regid)
@@ -218,7 +218,7 @@ def genptr_decl_new(f, tag, regtype, regid, regno):
                 f"get_result_gpr(ctx, insn->regno[{regno}]);\n"
             )
             f.write(
-                f"    gen_helper_trace_load_reg(tcg_constant_i32(insn->regno[{regno}]), {regtype}{regid}N, tcg_constant_i32(true));\n"
+                f"    gen_helper_trace_load_reg_new(tcg_constant_i32(insn->regno[{regno}]), {regtype}{regid}N);\n"
                 )
         else:
             hex_common.bad_register(regtype, regid)
@@ -229,7 +229,7 @@ def genptr_decl_new(f, tag, regtype, regid, regno):
                 f"ctx->new_pred_value[insn->regno[{regno}]];\n"
             )
             f.write(
-                f"    gen_helper_trace_load_pred(tcg_constant_i32(insn->regno[{regno}]), {regtype}{regid}N, tcg_constant_i32(true));\n"
+                f"    gen_helper_trace_load_pred_new(tcg_constant_i32(insn->regno[{regno}]), {regtype}{regid}N);\n"
                 )
         else:
             hex_common.bad_register(regtype, regid)
@@ -288,7 +288,7 @@ def genptr_src_read(f, tag, regtype, regid):
                 f"{regid}N + 1]);\n"
             )
             f.write(
-                f"    gen_helper_trace_load_reg_pair(tcg_constant_i32({regtype}{regid}N), {regtype}{regid}V, tcg_constant_i32(false));\n"
+                f"    gen_helper_trace_load_reg_pair(tcg_constant_i32({regtype}{regid}N), {regtype}{regid}V);\n"
                 )
         elif regid in {"x", "y"}:
             ## For read/write registers, we need to get the original value into
@@ -300,7 +300,7 @@ def genptr_src_read(f, tag, regtype, regid):
                     f"hex_gpr[{regtype}{regid}N]);\n"
                 )
                 f.write(
-                    f"    gen_helper_trace_load_reg(tcg_constant_i32({regtype}{regid}N), {regtype}{regid}V, tcg_constant_i32(false));\n"
+                    f"    gen_helper_trace_load_reg(tcg_constant_i32({regtype}{regid}N), {regtype}{regid}V);\n"
                     )
         elif regid not in {"s", "t", "u", "v"}:
             hex_common.bad_register(regtype, regid)
@@ -311,7 +311,7 @@ def genptr_src_read(f, tag, regtype, regid):
                 f"hex_pred[{regtype}{regid}N]);\n"
             )
             f.write(
-                f"    gen_helper_trace_load_pred(tcg_constant_i32({regtype}{regid}N), {regtype}{regid}V, tcg_constant_i32(false));\n"
+                f"    gen_helper_trace_load_pred(tcg_constant_i32({regtype}{regid}N), {regtype}{regid}V);\n"
                 )
         elif regid not in {"s", "t", "u", "v"}:
             hex_common.bad_register(regtype, regid)
