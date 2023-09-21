@@ -126,26 +126,30 @@ void HELPER(trace_endframe)(CPUHexagonState *state, target_ulong addr,
 
 // Memory
 // name, return type, address, val, width
-void HELPER(trace_load_mem)(target_ulong addr, target_ulong val, uint32_t width) {
+void HELPER(trace_load_mem)(target_ulong addr, target_ulong val, MemOp op) {
+  uint32_t width = memop_size(op);
   qemu_log("TRACE \tLOAD MEM at 0x%x width: %d data: 0x%x\n", addr, width, val);
   OperandInfo *oi = build_load_store_mem(addr, 0, &val, width);
   qemu_trace_add_operand(oi, 0x1);
 }
 
-void HELPER(trace_store_mem)(target_ulong addr, target_ulong val, uint32_t width) {
+void HELPER(trace_store_mem)(target_ulong addr, target_ulong val, MemOp op) {
+  uint32_t width = memop_size(op);
   qemu_log("TRACE \tSTORE MEM at 0x%x width: %d data: 0x%lx\n", addr, width,
            (unsigned long)val);
   OperandInfo *oi = build_load_store_mem(addr, 1, &val, width);
   qemu_trace_add_operand(oi, 0x2);
 }
 
-void HELPER(trace_load_mem_64)(target_ulong addr, uint64_t val, uint32_t width) {
+void HELPER(trace_load_mem_64)(target_ulong addr, uint64_t val, MemOp op) {
+  uint32_t width = memop_size(op);
   qemu_log("TRACE \tLOAD MEM at 0x%x width: %d data: 0x%lx\n", addr, width, val);
   OperandInfo *oi = build_load_store_mem(addr, 0, &val, width);
   qemu_trace_add_operand(oi, 0x1);
 }
 
-void HELPER(trace_store_mem_64)(target_ulong addr, uint64_t val, uint32_t width) {
+void HELPER(trace_store_mem_64)(target_ulong addr, uint64_t val, MemOp op) {
+  uint32_t width = memop_size(op);
   qemu_log("TRACE \tSTORE MEM at 0x%lx width: %d data: 0x%lx\n", (unsigned long)addr, width,
            (unsigned long)val);
   OperandInfo *oi = build_load_store_mem(addr, 1, &val, width);
