@@ -37,20 +37,16 @@ static const char * const hexagon_prednames[] = {
   "p0", "p1", "p2", "p3"
 };
 
-/*
- * Build frames
- *
- * Functions to fill the actual frame data.
- */
-
 /**
  * \brief Builds a new register load/store operand and returns it.
  *
  * \param name The register name.
- * \param ls If set to 0 the usage flag is set to "read". Otherwise the usage
- * flag is set to "written". \param data Data written to the register. \param
- * data_size Size of the data in bytes. \return OperandInfo* Pointer to the
- * operand for a BAP frame.
+ * \param ls If set to 0 the usage flag is set to "read".
+ *        Otherwise the usage flag is set to "written".
+ * \param data Data written to the register.
+ * \param data_size Size of the data in bytes.
+ *
+ * \return OperandInfo* Pointer to the operand for a BAP frame.
  */
 static OperandInfo *build_load_store_reg_op(const char *name, int ls,
                                             const void *data,
