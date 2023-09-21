@@ -231,15 +231,28 @@ void HELPER(trace_store_vreg)(uint32_t vreg, void *val) {
 // Predicates
 // name, return type, pred reg, val, load_new
 void HELPER(trace_load_pred)(uint32_t pred, target_ulong val) {
+  assert(pred < sizeof(hexagon_prednames)/sizeof(hexagon_prednames[0]));
   qemu_log("TRACE \tLOAD PRED %s Val: 0x%x\n", hexagon_prednames[pred], val);
+  OperandInfo *oi = build_load_store_reg_op(hexagon_prednames[pred], 0, &val, 1);
+  qemu_trace_add_operand(oi, 0x1);
 }
 
 void HELPER(trace_load_pred_new)(uint32_t pred, target_ulong val) {
+  assert(pred < sizeof(hexagon_prednames)/sizeof(hexagon_prednames[0]));
   qemu_log("TRACE \tLOAD PRED NEW: %s Val: 0x%x\n", hexagon_prednames[pred], val);
+  char pred_name[16] = { 0 };
+  snprintf(pred_name, sizeof(pred_name) - 1, "%s_tmp", hexagon_prednames[pred]);
+  OperandInfo *oi = build_load_store_reg_op(pred_name, 0, &val, 1);
+  qemu_trace_add_operand(oi, 0x1);
 }
 
 void HELPER(trace_store_pred)(uint32_t pred, target_ulong val) {
+  assert(pred < sizeof(hexagon_prednames)/sizeof(hexagon_prednames[0]));
   qemu_log("TRACE \tSTORE PRED: %s Val: 0x%x\n", hexagon_prednames[pred], val);
+  char pred_name[16] = { 0 };
+  snprintf(pred_name, sizeof(pred_name) - 1, "%s_tmp", hexagon_prednames[pred]);
+  OperandInfo *oi = build_load_store_reg_op(pred_name, 1, &val, 1);
+  qemu_trace_add_operand(oi, 0x2);
 }
 
 void HELPER(trace_load_vpred)(uint32_t vpred, void *val) {
