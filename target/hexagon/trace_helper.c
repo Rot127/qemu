@@ -214,22 +214,8 @@ void HELPER(trace_store_reg_pair)(uint32_t reg, uint64_t val) {
   qemu_trace_add_operand(oi, 0x2);
 }
 
-// VRegs
-// name, return type, vreg, val, load_new
-void HELPER(trace_load_vreg)(uint32_t vreg, void *val) {
-  qemu_log("TRACE \tLOAD VREG: %d Val: %p\n", vreg, val);
-}
-
-void HELPER(trace_load_vreg_new)(uint32_t vreg, void *val) {
-  qemu_log("TRACE \tLOAD VREG NEW: %d Val: %p\n", vreg, val);
-}
-
-void HELPER(trace_store_vreg)(uint32_t vreg, void *val) {
-  qemu_log("TRACE \tSTORE VREG %d Val: %p\n", vreg, val);
-}
-
 // Predicates
-// name, return type, pred reg, val, load_new
+// name, return type, pred reg, val
 void HELPER(trace_load_pred)(uint32_t pred, target_ulong val) {
   assert(pred < sizeof(hexagon_prednames)/sizeof(hexagon_prednames[0]));
   qemu_log("TRACE \tLOAD PRED %s Val: 0x%x\n", hexagon_prednames[pred], val);
@@ -253,6 +239,20 @@ void HELPER(trace_store_pred)(uint32_t pred, target_ulong val) {
   snprintf(pred_name, sizeof(pred_name) - 1, "%s_tmp", hexagon_prednames[pred]);
   OperandInfo *oi = build_load_store_reg_op(pred_name, 1, &val, 1);
   qemu_trace_add_operand(oi, 0x2);
+}
+
+// VRegs
+// name, return type, vreg, val
+void HELPER(trace_load_vreg)(uint32_t vreg, void *val) {
+  qemu_log("TRACE \tLOAD VREG: %d Val: %p\n", vreg, val);
+}
+
+void HELPER(trace_load_vreg_new)(uint32_t vreg, void *val) {
+  qemu_log("TRACE \tLOAD VREG NEW: %d Val: %p\n", vreg, val);
+}
+
+void HELPER(trace_store_vreg)(uint32_t vreg, void *val) {
+  qemu_log("TRACE \tSTORE VREG %d Val: %p\n", vreg, val);
 }
 
 void HELPER(trace_load_vpred)(uint32_t vpred, void *val) {
