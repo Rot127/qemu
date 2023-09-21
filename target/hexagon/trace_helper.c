@@ -108,8 +108,8 @@ void HELPER(trace_newframe)(target_ulong addr) {
 }
 void HELPER(trace_endframe)(CPUHexagonState *state, target_ulong addr,
                             uint32_t pkt_size) {
-  qemu_log("TRACE FRAME END at 0x%x size: %d\n", addr, pkt_size);
-  qemu_trace_endframe(state, addr, pkt_size);
+  qemu_log("TRACE FRAME END at 0x%x size: %d\n", addr, pkt_size * 4);
+  qemu_trace_endframe(state, addr, pkt_size * 4);
 }
 
 // Memory
