@@ -2,19 +2,6 @@
 
 #include "trace_helper.h"
 
-#ifdef BSWAP_NEEDED
-static void memcpy_rev(void *dest, const void *src, size_t size) {
-  if (size < 1) {
-    return;
-  }
-  const char *s = src;
-  char *d = dest;
-  for (size_t i = 0, j = size - 1; i < size; --j, ++i) {
-    d[i] = s[j];
-  }
-}
-#endif
-
 // Copies from genptr
 
 const char * const hex_regnames[TOTAL_PER_THREAD_REGS] = {
