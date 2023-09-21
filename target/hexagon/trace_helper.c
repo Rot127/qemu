@@ -47,35 +47,35 @@ static const char * const hexagon_prednames[] = {
  * data_size Size of the data in bytes. \return OperandInfo* Pointer to the
  * operand for a BAP frame.
  */
-// static OperandInfo *build_load_store_reg_op(const char *name, int ls,
-//                                             const void *data,
-//                                             size_t data_size) {
-//   RegOperand *ro = g_new(RegOperand, 1);
-//   reg_operand__init(ro);
-//   ro->name = strdup(name);
+static OperandInfo *build_load_store_reg_op(const char *name, int ls,
+                                            const void *data,
+                                            size_t data_size) {
+  RegOperand *ro = g_new(RegOperand, 1);
+  reg_operand__init(ro);
+  ro->name = strdup(name);
 
-//   OperandInfoSpecific *ois = g_new(OperandInfoSpecific, 1);
-//   operand_info_specific__init(ois);
-//   ois->reg_operand = ro;
+  OperandInfoSpecific *ois = g_new(OperandInfoSpecific, 1);
+  operand_info_specific__init(ois);
+  ois->reg_operand = ro;
 
-//   OperandUsage *ou = g_new(OperandUsage, 1);
-//   operand_usage__init(ou);
-//   if (ls == 0) {
-//     ou->read = 1;
-//   } else {
-//     ou->written = 1;
-//   }
-//   OperandInfo *oi = g_new(OperandInfo, 1);
-//   operand_info__init(oi);
-//   oi->bit_length = 0;
-//   oi->operand_info_specific = ois;
-//   oi->operand_usage = ou;
-//   oi->value.len = data_size;
-//   oi->value.data = g_malloc(oi->value.len);
-//   memcpy(oi->value.data, data, data_size);
+  OperandUsage *ou = g_new(OperandUsage, 1);
+  operand_usage__init(ou);
+  if (ls == 0) {
+    ou->read = 1;
+  } else {
+    ou->written = 1;
+  }
+  OperandInfo *oi = g_new(OperandInfo, 1);
+  operand_info__init(oi);
+  oi->bit_length = 0;
+  oi->operand_info_specific = ois;
+  oi->operand_usage = ou;
+  oi->value.len = data_size;
+  oi->value.data = g_malloc(oi->value.len);
+  memcpy(oi->value.data, data, data_size);
 
-//   return oi;
-// }
+  return oi;
+}
 
 static OperandInfo *build_load_store_mem(uint64_t addr, int ls, const void *data,
                             size_t data_size) {
@@ -157,23 +157,29 @@ void HELPER(trace_store_mem_64)(target_ulong addr, uint64_t val, MemOp op) {
 }
 
 // GPRs
-// name, return type, reg, val, load_new
 void HELPER(trace_load_reg)(uint32_t reg, uint32_t val) {
+  assert(reg < sizeof(hexagon_regnames)/sizeof(hex_regnames[0]));
   qemu_log("TRACE \tLOAD REG %s Val: 0x%x\n", hexagon_regnames[reg], val);
-  // OperandInfo *oi = build_load_store_reg_op(reg, val, 0, load_new);
-  // qemu_trace_add_operand(oi, 0x1);
+  OperandInfo *oi = build_load_store_reg_op(hexagon_regnames[reg], 0, &val, TARGET_LONG_BITS);
+  qemu_trace_add_operand(oi, 0x1);
 }
 
 void HELPER(trace_load_reg_new)(uint32_t reg, uint32_t val) {
+  assert(reg < sizeof(hexagon_regnames)/sizeof(hex_regnames[0]));
   qemu_log("TRACE \tLOAD REG NEW %s Val: 0x%x\n", hexagon_regnames[reg], val);
-  // OperandInfo *oi = build_load_store_reg_op(reg, val, 0, load_new);
-  // qemu_trace_add_operand(oi, 0x1);
+  char reg_name[16] = { 0 };
+  snprintf(reg_name, sizeof(reg_name) - 1, "%s_tmp", hexagon_regnames[reg]);
+  OperandInfo *oi = build_load_store_reg_op(reg_name, 0, &val, TARGET_LONG_BITS);
+  qemu_trace_add_operand(oi, 0x1);
 }
 
 void HELPER(trace_store_reg)(uint32_t reg, uint32_t val) {
+  assert(reg < sizeof(hexagon_regnames)/sizeof(hex_regnames[0]));
   qemu_log("TRACE \tSTORE REG %s Val: 0x%x\n", hexagon_regnames[reg], val);
-  // OperandInfo *oi = load_store_reg(reg, val, 1);
-  // qemu_trace_add_operand(oi, 0x2);
+  char reg_name[16] = { 0 };
+  snprintf(reg_name, sizeof(reg_name) - 1, "%s_tmp", hexagon_regnames[reg]);
+  OperandInfo *oi = build_load_store_reg_op(reg_name, 1, &val, TARGET_LONG_BITS);
+  qemu_trace_add_operand(oi, 0x2);
 }
 
 void HELPER(trace_load_reg_pair)(uint32_t reg, uint64_t val) {
