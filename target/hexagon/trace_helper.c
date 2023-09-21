@@ -20,12 +20,17 @@ static void memcpy_rev(void *dest, const void *src, size_t size) {
 const char * const hex_regnames[TOTAL_PER_THREAD_REGS] = {
    "r0", "r1",  "r2",  "r3",  "r4",   "r5",  "r6",  "r7",
    "r8", "r9",  "r10", "r11", "r12",  "r13", "r14", "r15",
-  "r16", "r17", "r18", "r19", "r20",  "r21", "r22", "r23",
-  "r24", "r25", "r26", "r27", "r28",  "r29", "r30", "r31",
-  "sa0", "lc0", "sa1", "lc1", "p3_0", "c5",  "m0",  "m1",
-  "usr", "pc",  "ugp", "gp",  "cs0",  "cs1", "c14", "c15",
-  "c16", "c17", "c18", "c19", "pkt_cnt",  "insn_cnt", "hvx_cnt", "c23",
-  "c24", "c25", "c26", "c27", "c28",  "c29", "c30", "c31",
+   "r16", "r17", "r18", "r19", "r20",  "r21", "r22", "r23",
+   "r24", "r25", "r26", "r27", "r28",  "r29", "r30", "r31",
+   "c0" /* sa0 */, "c1" /* lc0 */, "c2" /* sa1 */, "c3" /* lc1 */,
+   "c4" /* p3_0 */,  "c5" /* c5 */, "c6" /* m0 */, "c7" /* m1 */,
+   "c8" /* usr */, "c9" /* pc */, "c10" /* ugp */, "c11" /* gp */,
+   "c12" /* cs0 */, "c13" /* cs1 */, "c14" /* c14 */, "c15" /* c15 */,
+   "c16" /* c16 */, "c17" /* c17 */, "c18" /* c18 */, "c19" /* c19 */,
+   "c20" /* pkt_cnt */, "c21" /* insn_cnt */, "c22" /* hvx_cnt */,
+   "c23" /* c23 */, "c24" /* c24 */, "c25" /* c25 */, "c26" /* c26 */,
+   "c27" /* c27 */, "c28" /* c28 */, "c29" /* c29 */, "c30" /* c30 */,
+   "c31" /* c31 */,
 };
 
 static const char * const hexagon_prednames[] = {
@@ -183,21 +188,30 @@ void HELPER(trace_store_reg)(uint32_t reg, uint32_t val) {
 }
 
 void HELPER(trace_load_reg_pair)(uint32_t reg, uint64_t val) {
+  assert(reg + 1 < sizeof(hexagon_regnames)/sizeof(hex_regnames[0]));
   qemu_log("TRACE \tLOAD REG %s:%s Val: 0x%lx\n", hexagon_regnames[reg+1], &hexagon_regnames[reg][1], val);
-  // OperandInfo *oi = build_load_store_reg_op(reg, val, 0, load_new);
-  // qemu_trace_add_operand(oi, 0x1);
+  char reg_name[16] = { 0 };
+  snprintf(reg_name, sizeof(reg_name) - 1, "%s:%s", hexagon_regnames[reg+1], &hexagon_regnames[reg][1]);
+  OperandInfo *oi = build_load_store_reg_op(reg_name, 0, &val, TARGET_LONG_BITS);
+  qemu_trace_add_operand(oi, 0x1);
 }
 
 void HELPER(trace_load_reg_pair_new)(uint32_t reg, uint64_t val) {
+  assert(reg + 1 < sizeof(hexagon_regnames)/sizeof(hex_regnames[0]));
   qemu_log("TRACE \tLOAD REG NEW %s:%s Val: 0x%lx\n", hexagon_regnames[reg+1], &hexagon_regnames[reg][1], val);
-  // OperandInfo *oi = build_load_store_reg_op(reg, val, 0, load_new);
-  // qemu_trace_add_operand(oi, 0x1);
+  char reg_name[16] = { 0 };
+  snprintf(reg_name, sizeof(reg_name) - 1, "%s:%s_tmp", hexagon_regnames[reg+1], &hexagon_regnames[reg][1]);
+  OperandInfo *oi = build_load_store_reg_op(reg_name, 0, &val, TARGET_LONG_BITS);
+  qemu_trace_add_operand(oi, 0x1);
 }
 
 void HELPER(trace_store_reg_pair)(uint32_t reg, uint64_t val) {
+  assert(reg + 1 < sizeof(hexagon_regnames)/sizeof(hex_regnames[0]));
   qemu_log("TRACE \tSTORE REG %s:%s Val: 0x%lx\n", hexagon_regnames[reg+1], &hexagon_regnames[reg][1], val);
-  // OperandInfo *oi = load_store_reg(reg, val, 1);
-  // qemu_trace_add_operand(oi, 0x2);
+  char reg_name[16] = { 0 };
+  snprintf(reg_name, sizeof(reg_name) - 1, "%s:%s_tmp", hexagon_regnames[reg+1], &hexagon_regnames[reg][1]);
+  OperandInfo *oi = build_load_store_reg_op(reg_name, 1, &val, TARGET_LONG_BITS);
+  qemu_trace_add_operand(oi, 0x2);
 }
 
 // VRegs
