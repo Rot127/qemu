@@ -675,6 +675,7 @@ static void gen_reg_writes(DisasContext *ctx)
         int reg_num = ctx->reg_log[i];
 
         tcg_gen_mov_tl(hex_gpr[reg_num], get_result_gpr(ctx, reg_num));
+        gen_helper_trace_store_reg(tcg_constant_i32(reg_num), hex_gpr[reg_num]);
 
         /*
          * ctx->is_tight_loop is set when SA0 points to the beginning of the TB.
@@ -696,6 +697,7 @@ static void gen_pred_writes(DisasContext *ctx)
     for (int i = 0; i < ctx->preg_log_idx; i++) {
         int pred_num = ctx->preg_log[i];
         tcg_gen_mov_tl(hex_pred[pred_num], ctx->new_pred_value[pred_num]);
+        gen_helper_trace_store_reg(tcg_constant_i32(pred_num), hex_pred[pred_num]);
     }
 }
 
