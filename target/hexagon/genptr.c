@@ -129,8 +129,10 @@ TCGv get_result_pred(DisasContext *ctx, int pnum)
             ctx->new_pred_value[pnum] = tcg_temp_new();
             tcg_gen_movi_tl(ctx->new_pred_value[pnum], 0);
         }
+        gen_helper_trace_load_pred_new(tcg_constant_i32(pnum), ctx->new_pred_value[pnum]);
         return ctx->new_pred_value[pnum];
     } else {
+        gen_helper_trace_load_pred(tcg_constant_i32(pnum), hex_pred[pnum]);
         return hex_pred[pnum];
     }
 }
