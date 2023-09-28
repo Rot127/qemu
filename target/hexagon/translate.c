@@ -697,7 +697,7 @@ static void gen_pred_writes(DisasContext *ctx)
     for (int i = 0; i < ctx->preg_log_idx; i++) {
         int pred_num = ctx->preg_log[i];
         tcg_gen_mov_tl(hex_pred[pred_num], ctx->new_pred_value[pred_num]);
-        gen_helper_trace_store_reg(tcg_constant_i32(pred_num), hex_pred[pred_num]);
+        gen_helper_trace_store_pred(tcg_constant_i32(pred_num), hex_pred[pred_num]);
     }
 }
 
