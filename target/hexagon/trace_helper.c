@@ -170,33 +170,6 @@ void HELPER(trace_store_reg)(uint32_t reg, uint32_t val) {
   qemu_trace_add_operand(oi, 0x2);
 }
 
-void HELPER(trace_load_reg_pair)(uint32_t reg, uint64_t val) {
-  assert(reg + 1 < sizeof(hex_regnames)/sizeof(hex_regnames[0]));
-  qemu_log("TRACE \tLOAD REG %s:%s Val: 0x%lx\n", hex_regnames[reg+1], &hex_regnames[reg][1], val);
-  char reg_name[16] = { 0 };
-  snprintf(reg_name, sizeof(reg_name) - 1, "%s:%s", hex_regnames[reg+1], &hex_regnames[reg][1]);
-  OperandInfo *oi = build_load_store_reg_op(reg_name, 0, &val, TARGET_LONG_BITS/8);
-  qemu_trace_add_operand(oi, 0x1);
-}
-
-void HELPER(trace_load_reg_pair_new)(uint32_t reg, uint64_t val) {
-  assert(reg + 1 < sizeof(hex_regnames)/sizeof(hex_regnames[0]));
-  qemu_log("TRACE \tLOAD REG NEW %s:%s Val: 0x%lx\n", hex_regnames[reg+1], &hex_regnames[reg][1], val);
-  char reg_name[16] = { 0 };
-  snprintf(reg_name, sizeof(reg_name) - 1, "%s:%s_tmp", hex_regnames[reg+1], &hex_regnames[reg][1]);
-  OperandInfo *oi = build_load_store_reg_op(reg_name, 0, &val, TARGET_LONG_BITS/8);
-  qemu_trace_add_operand(oi, 0x1);
-}
-
-void HELPER(trace_store_reg_pair)(uint32_t reg, uint64_t val) {
-  assert(reg + 1 < sizeof(hex_regnames)/sizeof(hex_regnames[0]));
-  qemu_log("TRACE \tSTORE REG %s:%s Val: 0x%lx\n", hex_regnames[reg+1], &hex_regnames[reg][1], val);
-  char reg_name[16] = { 0 };
-  snprintf(reg_name, sizeof(reg_name) - 1, "%s:%s_tmp", hex_regnames[reg+1], &hex_regnames[reg][1]);
-  OperandInfo *oi = build_load_store_reg_op(reg_name, 1, &val, TARGET_LONG_BITS/8);
-  qemu_trace_add_operand(oi, 0x2);
-}
-
 // Predicates
 // name, return type, pred reg, val
 void HELPER(trace_load_pred)(uint32_t pred, target_ulong val) {

@@ -39,11 +39,6 @@ def genptr_decl_pair_writable(f, tag, regtype, regid, regno):
     else:
         hex_common.bad_register(regtype, regid)
     f.write(f"    TCGv_i64 {regtype}{regid}V = " f"get_result_gpr_pair(ctx, {regN});\n")
-    if regid in ["x", "y"]:
-        f.write(
-            f"    gen_helper_trace_load_reg_pair_new(tcg_constant_i32({regN}), {regtype}{regid}V);\n"
-            )
-
 
 def genptr_decl_writable(f, tag, regtype, regid, regno):
     regN = f"{regtype}{regid}N"
@@ -287,9 +282,6 @@ def genptr_src_read(f, tag, regtype, regid):
                 f"                                 hex_gpr[{regtype}"
                 f"{regid}N + 1]);\n"
             )
-            f.write(
-                f"    gen_helper_trace_load_reg_pair(tcg_constant_i32({regtype}{regid}N), {regtype}{regid}V);\n"
-                )
         elif regid in {"x", "y"}:
             ## For read/write registers, we need to get the original value into
             ## the result TCGv.  For conditional instructions, this is done in

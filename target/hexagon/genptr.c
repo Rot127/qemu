@@ -75,15 +75,18 @@ TCGv get_result_gpr(DisasContext *ctx, int rnum)
 {
     if (ctx->need_commit) {
         if (rnum == HEX_REG_USR) {
+            gen_helper_trace_load_reg(tcg_constant_i32(rnum), hex_new_value_usr);
             return hex_new_value_usr;
         } else {
             if (ctx->new_value[rnum] == NULL) {
                 ctx->new_value[rnum] = tcg_temp_new();
                 tcg_gen_movi_tl(ctx->new_value[rnum], 0);
             }
+            gen_helper_trace_load_reg_new(tcg_constant_i32(rnum), ctx->new_value[rnum]);
             return ctx->new_value[rnum];
         }
     } else {
+        gen_helper_trace_load_reg(tcg_constant_i32(rnum), hex_gpr[rnum]);
         return hex_gpr[rnum];
     }
 }
@@ -217,7 +220,6 @@ static inline void gen_read_ctrl_reg_pair(DisasContext *ctx, const int reg_num,
     } else if (reg_num == HEX_REG_PC - 1) {
         TCGv pc = tcg_constant_tl(ctx->base.pc_next);
         tcg_gen_concat_i32_i64(dest, hex_gpr[reg_num], pc);
-        gen_helper_trace_load_reg_pair(tcg_constant_i32(reg_num), dest);
     } else if (reg_num == HEX_REG_QEMU_PKT_CNT) {
         TCGv pkt_cnt = tcg_temp_new();
         TCGv insn_cnt = tcg_temp_new();
@@ -226,18 +228,15 @@ static inline void gen_read_ctrl_reg_pair(DisasContext *ctx, const int reg_num,
         tcg_gen_addi_tl(insn_cnt, hex_gpr[HEX_REG_QEMU_INSN_CNT],
                         ctx->num_insns);
         tcg_gen_concat_i32_i64(dest, pkt_cnt, insn_cnt);
-        gen_helper_trace_load_reg_pair(tcg_constant_i32(reg_num), dest);
     } else if (reg_num == HEX_REG_QEMU_HVX_CNT) {
         TCGv hvx_cnt = tcg_temp_new();
         tcg_gen_addi_tl(hvx_cnt, hex_gpr[HEX_REG_QEMU_HVX_CNT],
                         ctx->num_hvx_insns);
         tcg_gen_concat_i32_i64(dest, hvx_cnt, hex_gpr[reg_num + 1]);
-        gen_helper_trace_load_reg_pair(tcg_constant_i32(reg_num), dest);
     } else {
         tcg_gen_concat_i32_i64(dest,
             hex_gpr[reg_num],
             hex_gpr[reg_num + 1]);
-        gen_helper_trace_load_reg_pair(tcg_constant_i32(reg_num), dest);
     }
 }
 

@@ -130,10 +130,6 @@ DEF_HELPER_2(trace_load_reg, void, i32, i32)
 DEF_HELPER_2(trace_load_reg_new, void, i32, i32)
 DEF_HELPER_2(trace_store_reg, void, i32, i32)
 
-DEF_HELPER_2(trace_load_reg_pair, void, i32, i64)
-DEF_HELPER_2(trace_load_reg_pair_new, void, i32, i64)
-DEF_HELPER_2(trace_store_reg_pair, void, i32, i64)
-
 // VRegs
 // name, return type, vreg, val, load_new
 DEF_HELPER_2(trace_load_vreg, void, i32, ptr)
