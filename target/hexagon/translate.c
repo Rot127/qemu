@@ -573,6 +573,7 @@ static void gen_start_packet(DisasContext *ctx)
             int pred_num = ctx->preg_log[i];
             ctx->new_pred_value[pred_num] = tcg_temp_new();
             tcg_gen_mov_tl(ctx->new_pred_value[pred_num], hex_pred[pred_num]);
+            gen_helper_trace_store_pred_new(tcg_constant_i32(pred_num), hex_pred[pred_num]);
         }
     }
 
@@ -761,24 +762,28 @@ void process_store(DisasContext *ctx, int slot_num)
             tcg_gen_qemu_st_tl(hex_store_val32[slot_num],
                                hex_store_addr[slot_num],
                                ctx->mem_idx, MO_UB);
+            gen_helper_trace_store_mem(hex_store_addr[slot_num], hex_store_val32[slot_num], tcg_constant_i32(MO_UB));
             break;
         case 2:
             gen_check_store_width(ctx, slot_num);
             tcg_gen_qemu_st_tl(hex_store_val32[slot_num],
                                hex_store_addr[slot_num],
                                ctx->mem_idx, MO_TEUW);
+            gen_helper_trace_store_mem(hex_store_addr[slot_num], hex_store_val32[slot_num], tcg_constant_i32(MO_TEUW));
             break;
         case 4:
             gen_check_store_width(ctx, slot_num);
             tcg_gen_qemu_st_tl(hex_store_val32[slot_num],
                                hex_store_addr[slot_num],
                                ctx->mem_idx, MO_TEUL);
+            gen_helper_trace_store_mem(hex_store_addr[slot_num], hex_store_val32[slot_num], tcg_constant_i32(MO_TEUL));
             break;
         case 8:
             gen_check_store_width(ctx, slot_num);
             tcg_gen_qemu_st_i64(hex_store_val64[slot_num],
                                 hex_store_addr[slot_num],
                                 ctx->mem_idx, MO_TEUQ);
+            gen_helper_trace_store_mem_64(hex_store_addr[slot_num], hex_store_val64[slot_num], tcg_constant_i32(MO_TEUQ));
             break;
         default:
             {

@@ -35,14 +35,14 @@
 TCGv gen_read_reg(TCGv result, int num)
 {
     tcg_gen_mov_tl(result, hex_gpr[num]);
-    gen_helper_trace_load_reg(tcg_constant_i32(num), result);
+    gen_helper_trace_load_reg(tcg_constant_i32(num), hex_gpr[num]);
     return result;
 }
 
 TCGv gen_read_preg(TCGv pred, uint8_t num)
 {
     tcg_gen_mov_tl(pred, hex_pred[num]);
-    gen_helper_trace_load_pred(tcg_constant_i32(num), pred);
+    gen_helper_trace_load_pred(tcg_constant_i32(num), hex_pred[num]);
     return pred;
 }
 
@@ -105,7 +105,11 @@ void gen_log_reg_write(DisasContext *ctx, int rnum, TCGv val)
 
     gen_masked_reg_write(val, hex_gpr[rnum], reg_mask);
     tcg_gen_mov_tl(get_result_gpr(ctx, rnum), val);
-    gen_helper_trace_store_reg(tcg_constant_i32(rnum), get_result_gpr(ctx, rnum));
+    if (ctx->need_commit) {
+        gen_helper_trace_store_reg_new(tcg_constant_i32(rnum), val);
+    } else {
+        gen_helper_trace_store_reg(tcg_constant_i32(rnum), val);
+    }
     if (HEX_DEBUG) {
         /* Do this so HELPER(debug_commit_end) will know */
         tcg_gen_movi_tl(hex_reg_written[rnum], 1);
@@ -162,7 +166,7 @@ void gen_log_pred_write(DisasContext *ctx, int pnum, TCGv val)
     if (HEX_DEBUG) {
         tcg_gen_ori_tl(ctx->pred_written, ctx->pred_written, 1 << pnum);
     }
-    gen_helper_trace_store_pred(tcg_constant_i32(pnum), pred);
+    gen_helper_trace_store_pred_new(tcg_constant_i32(pnum), pred);
     set_bit(pnum, ctx->pregs_written);
 }
 
@@ -220,6 +224,7 @@ static inline void gen_read_ctrl_reg_pair(DisasContext *ctx, const int reg_num,
     } else if (reg_num == HEX_REG_PC - 1) {
         TCGv pc = tcg_constant_tl(ctx->base.pc_next);
         tcg_gen_concat_i32_i64(dest, hex_gpr[reg_num], pc);
+        gen_helper_trace_load_reg(tcg_constant_i32(reg_num), hex_gpr[reg_num]);
     } else if (reg_num == HEX_REG_QEMU_PKT_CNT) {
         TCGv pkt_cnt = tcg_temp_new();
         TCGv insn_cnt = tcg_temp_new();
@@ -237,6 +242,8 @@ static inline void gen_read_ctrl_reg_pair(DisasContext *ctx, const int reg_num,
         tcg_gen_concat_i32_i64(dest,
             hex_gpr[reg_num],
             hex_gpr[reg_num + 1]);
+        gen_helper_trace_load_reg(tcg_constant_i32(reg_num), hex_gpr[reg_num]);
+        gen_helper_trace_load_reg(tcg_constant_i32(reg_num + 1), hex_gpr[reg_num + 1]);
     }
 }
 
@@ -286,7 +293,11 @@ static inline void gen_write_ctrl_reg_pair(DisasContext *ctx, int reg_num,
         tcg_gen_extrh_i64_i32(val32, val);
         tcg_gen_mov_tl(result, val32);
         // p3_0 already written in gen_write_p3_0
-        gen_helper_trace_store_reg(tcg_constant_i32(reg_num + 1), result);
+        if (ctx->need_commit) {
+            gen_helper_trace_store_reg_new(tcg_constant_i32(reg_num), val32);
+        } else {
+            gen_helper_trace_store_reg(tcg_constant_i32(reg_num), val32);
+        }
     } else {
         gen_log_reg_write_pair(ctx, reg_num, val);
         if (reg_num == HEX_REG_QEMU_PKT_CNT) {
@@ -506,6 +517,7 @@ static void gen_write_new_pc_addr(DisasContext *ctx, TCGv addr,
     } else {
         tcg_gen_mov_tl(hex_gpr[HEX_REG_PC], addr);
     }
+    gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_PC), hex_gpr[HEX_REG_PC]);
 
     if (cond != TCG_COND_ALWAYS) {
         gen_set_label(pred_false);
@@ -727,6 +739,7 @@ static void gen_call(DisasContext *ctx, int pc_off)
 {
     TCGv lr = get_result_gpr(ctx, HEX_REG_LR);
     tcg_gen_movi_tl(lr, ctx->next_PC);
+    gen_helper_trace_store_reg_new(tcg_constant_i32(HEX_REG_LR), lr);
     gen_write_new_pc_pcrel(ctx, pc_off, TCG_COND_ALWAYS, NULL);
 }
 
@@ -734,6 +747,7 @@ static void gen_callr(DisasContext *ctx, TCGv new_pc)
 {
     TCGv lr = get_result_gpr(ctx, HEX_REG_LR);
     tcg_gen_movi_tl(lr, ctx->next_PC);
+    gen_helper_trace_store_reg_new(tcg_constant_i32(HEX_REG_LR), lr);
     gen_write_new_pc_addr(ctx, new_pc, TCG_COND_ALWAYS, NULL);
 }
 
@@ -747,6 +761,7 @@ static void gen_cond_call(DisasContext *ctx, TCGv pred,
     gen_write_new_pc_pcrel(ctx, pc_off, cond, lsb);
     tcg_gen_brcondi_tl(cond, lsb, 0, skip);
     tcg_gen_movi_tl(lr, ctx->next_PC);
+    gen_helper_trace_store_reg_new(tcg_constant_i32(HEX_REG_LR), lr);
     gen_set_label(skip);
 }
 
@@ -769,6 +784,9 @@ static TCGv_i64 gen_frame_scramble(void)
     TCGv tmp = tcg_temp_new();
     tcg_gen_xor_tl(tmp, hex_gpr[HEX_REG_LR], hex_gpr[HEX_REG_FRAMEKEY]);
     tcg_gen_concat_i32_i64(frame, hex_gpr[HEX_REG_FP], tmp);
+    gen_helper_trace_load_reg(tcg_constant_i32(HEX_REG_FRAMEKEY), hex_gpr[HEX_REG_FRAMEKEY]);
+    gen_helper_trace_load_reg(tcg_constant_i32(HEX_REG_LR), hex_gpr[HEX_REG_LR]);
+    gen_helper_trace_load_reg(tcg_constant_i32(HEX_REG_FP), hex_gpr[HEX_REG_FP]);
     return frame;
 }
 #endif
@@ -780,6 +798,7 @@ static void gen_frame_unscramble(TCGv_i64 frame)
     tcg_gen_extu_i32_i64(framekey, hex_gpr[HEX_REG_FRAMEKEY]);
     tcg_gen_shli_i64(framekey, framekey, 32);
     tcg_gen_xor_i64(frame, frame, framekey);
+    gen_helper_trace_load_reg(tcg_constant_i32(HEX_REG_FRAMEKEY), hex_gpr[HEX_REG_FRAMEKEY]);
 }
 
 static void gen_load_frame(DisasContext *ctx, TCGv_i64 frame, TCGv EA)
@@ -787,6 +806,7 @@ static void gen_load_frame(DisasContext *ctx, TCGv_i64 frame, TCGv EA)
     Insn *insn = ctx->insn;  /* Needed for CHECK_NOSHUF */
     CHECK_NOSHUF(EA, 8);
     tcg_gen_qemu_ld_i64(frame, EA, ctx->mem_idx, MO_TEUQ);
+    gen_helper_trace_load_mem_64(EA, frame, tcg_constant_i32(MO_TEUQ));
 }
 
 #ifndef CONFIG_HEXAGON_IDEF_PARSER
