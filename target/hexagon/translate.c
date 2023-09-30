@@ -1042,6 +1042,7 @@ static void decode_and_translate_packet(CPUHexagonState *env, DisasContext *ctx)
     int i;
 
     gen_helper_trace_newframe(tcg_constant_tl(ctx->base.pc_next));
+    gen_helper_trace_load_reg(tcg_constant_i32(HEX_REG_PC), tcg_constant_tl(ctx->base.pc_next));
     nwords = read_packet_words(env, ctx, words);
     if (!nwords) {
         gen_exception_end_tb(ctx, HEX_EXCP_INVALID_PACKET);
