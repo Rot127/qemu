@@ -211,7 +211,7 @@ static inline void gen_read_ctrl_reg(DisasContext *ctx, const int reg_num,
     } else {
         tcg_gen_mov_tl(dest, hex_gpr[reg_num]);
     }
-    if (reg_num != HEX_REG_P3_0_ALIASED) {
+    if (reg_num != HEX_REG_P3_0_ALIASED && reg_num != HEX_REG_PC) {
         gen_helper_trace_load_reg(tcg_constant_i32(reg_num), dest);
     }
 }
@@ -521,7 +521,6 @@ static void gen_write_new_pc_addr(DisasContext *ctx, TCGv addr,
     } else {
         tcg_gen_mov_tl(hex_gpr[HEX_REG_PC], addr);
     }
-    gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_PC), hex_gpr[HEX_REG_PC]);
 
     if (cond != TCG_COND_ALWAYS) {
         gen_set_label(pred_false);

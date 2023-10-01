@@ -141,13 +141,11 @@ static void gen_goto_tb(DisasContext *ctx, int idx, target_ulong dest, bool
         tcg_gen_goto_tb(idx);
         if (move_to_pc) {
             tcg_gen_movi_tl(hex_gpr[HEX_REG_PC], dest);
-            gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_PC), hex_gpr[HEX_REG_PC]);
         }
         tcg_gen_exit_tb(ctx->base.tb, idx);
     } else {
         if (move_to_pc) {
             tcg_gen_movi_tl(hex_gpr[HEX_REG_PC], dest);
-            gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_PC), hex_gpr[HEX_REG_PC]);
         }
         tcg_gen_lookup_and_goto_ptr();
     }
@@ -194,7 +192,6 @@ static void gen_exception_end_tb(DisasContext *ctx, int excp)
     gen_helper_trace_endframe(cpu_env, tcg_constant_tl(ctx->base.pc_next), tcg_constant_i32(0));
     gen_exec_counters(ctx);
     tcg_gen_movi_tl(hex_gpr[HEX_REG_PC], ctx->next_PC);
-    gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_PC), hex_gpr[HEX_REG_PC]);
     gen_exception_raw(excp);
     ctx->base.is_jmp = DISAS_NORETURN;
 
@@ -549,7 +546,6 @@ static void gen_start_packet(DisasContext *ctx)
         }
         if (need_next_PC(ctx)) {
             tcg_gen_movi_tl(hex_gpr[HEX_REG_PC], next_PC);
-            gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_PC), hex_gpr[HEX_REG_PC]);
         }
     }
     if (HEX_DEBUG) {
@@ -1042,7 +1038,6 @@ static void decode_and_translate_packet(CPUHexagonState *env, DisasContext *ctx)
     int i;
 
     gen_helper_trace_newframe(tcg_constant_tl(ctx->base.pc_next));
-    gen_helper_trace_load_reg(tcg_constant_i32(HEX_REG_PC), tcg_constant_tl(ctx->base.pc_next));
     nwords = read_packet_words(env, ctx, words);
     if (!nwords) {
         gen_exception_end_tb(ctx, HEX_EXCP_INVALID_PACKET);
@@ -1060,7 +1055,6 @@ static void decode_and_translate_packet(CPUHexagonState *env, DisasContext *ctx)
         }
         gen_commit_packet(ctx);
         ctx->base.pc_next += pkt.encod_pkt_size_in_bytes;
-        gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_PC), tcg_constant_tl(ctx->base.pc_next));
         gen_helper_trace_endframe(cpu_env, tcg_constant_tl(pkt.pc), tcg_constant_i32(pkt.num_insns));
     } else {
         gen_exception_end_tb(ctx, HEX_EXCP_INVALID_PACKET);
@@ -1145,7 +1139,6 @@ static void hexagon_tr_tb_stop(DisasContextBase *dcbase, CPUState *cpu)
     case DISAS_TOO_MANY:
         gen_exec_counters(ctx);
         tcg_gen_movi_tl(hex_gpr[HEX_REG_PC], ctx->base.pc_next);
-        gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_PC), hex_gpr[HEX_REG_PC]);
         tcg_gen_exit_tb(NULL, 0);
         break;
     case DISAS_NORETURN:
