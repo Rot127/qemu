@@ -166,8 +166,12 @@ void gen_log_pred_write(DisasContext *ctx, int pnum, TCGv val)
     if (HEX_DEBUG) {
         tcg_gen_ori_tl(ctx->pred_written, ctx->pred_written, 1 << pnum);
     }
-    gen_helper_trace_store_pred_new(tcg_constant_i32(pnum), pred);
     set_bit(pnum, ctx->pregs_written);
+    if (ctx->need_commit) {
+        gen_helper_trace_store_pred_new(tcg_constant_i32(pnum), pred);
+    } else {
+        gen_helper_trace_store_pred(tcg_constant_i32(pnum), pred);
+    }
 }
 
 static inline void gen_read_p3_0(TCGv control_reg)
