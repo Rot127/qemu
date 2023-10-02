@@ -522,6 +522,12 @@ static void gen_start_packet(DisasContext *ctx)
     }
 
     analyze_packet(ctx);
+    for (int i = 0; i < TOTAL_PER_THREAD_REGS; ++i) {
+        gen_helper_trace_load_reg(tcg_constant_i32(i), hex_gpr[i]);
+    }
+    for (int i = 0; i < NUM_PREGS; ++i) {
+        gen_helper_trace_load_pred(tcg_constant_i32(i), hex_pred[i]);
+    }
 
     /*
      * pregs_written is used both in the analyze phase as well as the code
@@ -573,8 +579,7 @@ static void gen_start_packet(DisasContext *ctx)
             int pred_num = ctx->preg_log[i];
             ctx->new_pred_value[pred_num] = tcg_temp_new();
             tcg_gen_mov_tl(ctx->new_pred_value[pred_num], hex_pred[pred_num]);
-            gen_helper_trace_store_pred_new(tcg_constant_i32(pred_num), hex_pred[pred_num]);
-        }
+       }
     }
 
     /* Preload the predicated HVX registers into future_VRegs and tmp_VRegs */

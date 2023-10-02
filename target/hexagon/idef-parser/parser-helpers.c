@@ -1780,14 +1780,6 @@ void gen_store(Context *c, YYLTYPE *locp, HexValue *width, HexValue *ea,
     /* Lookup the effective address EA */
     find_variable(c, locp, ea, ea);
     src_m = rvalue_materialize(c, locp, &src_m);
-    if (src_m.type == REGISTER) {
-        OUT(c, locp, "gen_helper_trace_load_reg");
-        OUT(c, locp, (src_m.reg.bit_width == 64) ? "_pair" : "");
-        OUT(c, locp, (src_m.reg.type == DOTNEW ? "_new(" : "("));
-        OUT(c, locp, "tcg_constant_i32(", &src_m.reg.id, "), ");
-        reg_print(c, locp, &src_m.reg);
-        OUT(c, locp, "));\n");
-    }
     OUT(c, locp, "gen_store", &mem_width, "(cpu_env, ", ea, ", ", &src_m);
     OUT(c, locp, ", insn->slot);\n");
 }
