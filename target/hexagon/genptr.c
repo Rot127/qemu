@@ -723,7 +723,11 @@ static void gen_call(DisasContext *ctx, int pc_off)
 {
     TCGv lr = get_result_gpr(ctx, HEX_REG_LR);
     tcg_gen_movi_tl(lr, ctx->next_PC);
-    gen_helper_trace_store_reg_new(tcg_constant_i32(HEX_REG_LR), lr);
+    if (ctx->need_commit) {
+        gen_helper_trace_store_reg_new(tcg_constant_i32(HEX_REG_LR), lr);
+    } else {
+        gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_LR), lr);
+    }
     gen_write_new_pc_pcrel(ctx, pc_off, TCG_COND_ALWAYS, NULL);
 }
 
@@ -731,7 +735,11 @@ static void gen_callr(DisasContext *ctx, TCGv new_pc)
 {
     TCGv lr = get_result_gpr(ctx, HEX_REG_LR);
     tcg_gen_movi_tl(lr, ctx->next_PC);
-    gen_helper_trace_store_reg_new(tcg_constant_i32(HEX_REG_LR), lr);
+    if (ctx->need_commit) {
+        gen_helper_trace_store_reg_new(tcg_constant_i32(HEX_REG_LR), lr);
+    } else {
+        gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_LR), lr);
+    }
     gen_write_new_pc_addr(ctx, new_pc, TCG_COND_ALWAYS, NULL);
 }
 
@@ -745,7 +753,11 @@ static void gen_cond_call(DisasContext *ctx, TCGv pred,
     gen_write_new_pc_pcrel(ctx, pc_off, cond, lsb);
     tcg_gen_brcondi_tl(cond, lsb, 0, skip);
     tcg_gen_movi_tl(lr, ctx->next_PC);
-    gen_helper_trace_store_reg_new(tcg_constant_i32(HEX_REG_LR), lr);
+    if (ctx->need_commit) {
+        gen_helper_trace_store_reg_new(tcg_constant_i32(HEX_REG_LR), lr);
+    } else {
+        gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_LR), lr);
+    }
     gen_set_label(skip);
 }
 
