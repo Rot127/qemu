@@ -524,9 +524,11 @@ static void gen_start_packet(DisasContext *ctx)
     analyze_packet(ctx);
     for (int i = 0; i < TOTAL_PER_THREAD_REGS; ++i) {
         gen_helper_trace_load_reg(tcg_constant_i32(i), hex_gpr[i]);
+        gen_helper_trace_load_reg_new(tcg_constant_i32(i), hex_gpr[i]);
     }
     for (int i = 0; i < NUM_PREGS; ++i) {
         gen_helper_trace_load_pred(tcg_constant_i32(i), hex_pred[i]);
+        gen_helper_trace_load_pred_new(tcg_constant_i32(i), hex_pred[i]);
     }
 
     /*
