@@ -910,6 +910,13 @@ static void gen_endloop0(DisasContext *ctx)
     }
     gen_set_label(label2);
 
+    TCGLabel *label_lc0_decr = gen_new_label();
+    tcg_gen_brcondi_tl(TCG_COND_LEU, hex_gpr[HEX_REG_LC0], 1, label_lc0_decr);
+    TCGv lc0_tmp = get_result_gpr(ctx, HEX_REG_LC0);
+    tcg_gen_subi_tl(lc0_tmp, hex_gpr[HEX_REG_LC0], 1);
+    gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_LC0), lc0_tmp);
+    gen_set_label(label_lc0_decr);
+
     /*
      * If we're in a tight loop, we'll do this at the end of the TB to take
      * advantage of direct block chaining.
@@ -927,11 +934,6 @@ static void gen_endloop0(DisasContext *ctx)
             TCGv lc0 = get_result_gpr(ctx, HEX_REG_LC0);
             gen_jumpr(ctx, hex_gpr[HEX_REG_SA0]);
             tcg_gen_subi_tl(lc0, hex_gpr[HEX_REG_LC0], 1);
-            if (ctx->need_commit) {
-                gen_helper_trace_store_reg_new(tcg_constant_i32(HEX_REG_LC0), lc0);
-            } else {
-                gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_LC0), lc0);
-            }
         }
         gen_set_label(label3);
     }

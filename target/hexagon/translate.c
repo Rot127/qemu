@@ -154,11 +154,10 @@ static void gen_goto_tb(DisasContext *ctx, int idx, target_ulong dest, bool
 static void gen_end_tb(DisasContext *ctx)
 {
     Packet *pkt = ctx->pkt;
-
+    gen_helper_trace_endframe(cpu_env, tcg_constant_tl(pkt->pc), tcg_constant_i32(pkt->encod_pkt_size_in_bytes/4));
     gen_exec_counters(ctx);
 
     if (ctx->branch_cond != TCG_COND_NEVER) {
-        gen_helper_trace_endframe(cpu_env, tcg_constant_tl(pkt->pc), tcg_constant_i32(pkt->encod_pkt_size_in_bytes/4));
         if (ctx->branch_cond != TCG_COND_ALWAYS) {
             TCGLabel *skip = gen_new_label();
             tcg_gen_brcondi_tl(ctx->branch_cond, ctx->branch_taken, 0, skip);
@@ -177,13 +176,10 @@ static void gen_end_tb(DisasContext *ctx)
         TCGLabel *skip = gen_new_label();
         tcg_gen_brcondi_tl(TCG_COND_LEU, hex_gpr[HEX_REG_LC0], 1, skip);
         tcg_gen_subi_tl(hex_gpr[HEX_REG_LC0], hex_gpr[HEX_REG_LC0], 1);
-        gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_LC0), hex_gpr[HEX_REG_LC0]);
         gen_goto_tb(ctx, 0, ctx->base.tb->pc, true);
         gen_set_label(skip);
-        gen_helper_trace_endframe(cpu_env, tcg_constant_tl(pkt->pc), tcg_constant_i32(pkt->encod_pkt_size_in_bytes/4));
         gen_goto_tb(ctx, 1, ctx->next_PC, false);
     } else {
-        gen_helper_trace_endframe(cpu_env, tcg_constant_tl(pkt->pc), tcg_constant_i32(pkt->encod_pkt_size_in_bytes/4));
         tcg_gen_lookup_and_goto_ptr();
     }
 
