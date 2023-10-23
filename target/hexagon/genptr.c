@@ -535,6 +535,7 @@ void gen_set_usr_field(DisasContext *ctx, int field, TCGv val)
     tcg_gen_deposit_tl(usr, usr, val,
                        reg_field_info[field].offset,
                        reg_field_info[field].width);
+    gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_USR), usr);
 }
 
 void gen_set_usr_fieldi(DisasContext *ctx, int field, int x)
@@ -547,6 +548,7 @@ void gen_set_usr_fieldi(DisasContext *ctx, int field, int x)
         } else {
             tcg_gen_andi_tl(usr, usr, ~bit);
         }
+        gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_USR), usr);
     } else {
         TCGv val = tcg_constant_tl(x);
         gen_set_usr_field(ctx, field, val);
@@ -925,6 +927,11 @@ static void gen_endloop0(DisasContext *ctx)
             TCGv lc0 = get_result_gpr(ctx, HEX_REG_LC0);
             gen_jumpr(ctx, hex_gpr[HEX_REG_SA0]);
             tcg_gen_subi_tl(lc0, hex_gpr[HEX_REG_LC0], 1);
+            if (ctx->need_commit) {
+                gen_helper_trace_store_reg_new(tcg_constant_i32(HEX_REG_LC0), lc0);
+            } else {
+                gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_LC0), lc0);
+            }
         }
         gen_set_label(label3);
     }
@@ -944,6 +951,11 @@ static void gen_endloop1(DisasContext *ctx)
         TCGv lc1 = get_result_gpr(ctx, HEX_REG_LC1);
         gen_jumpr(ctx, hex_gpr[HEX_REG_SA1]);
         tcg_gen_subi_tl(lc1, hex_gpr[HEX_REG_LC1], 1);
+        if (ctx->need_commit) {
+            gen_helper_trace_store_reg_new(tcg_constant_i32(HEX_REG_LC1), lc1);
+        } else {
+            gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_LC1), lc1);
+        }
     }
     gen_set_label(label);
 }
@@ -995,6 +1007,11 @@ static void gen_endloop01(DisasContext *ctx)
         TCGv lc0 = get_result_gpr(ctx, HEX_REG_LC0);
         gen_jumpr(ctx, hex_gpr[HEX_REG_SA0]);
         tcg_gen_subi_tl(lc0, hex_gpr[HEX_REG_LC0], 1);
+        if (ctx->need_commit) {
+            gen_helper_trace_store_reg_new(tcg_constant_i32(HEX_REG_LC0), lc0);
+        } else {
+            gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_LC0), lc0);
+        }
         tcg_gen_br(done);
     }
     gen_set_label(label3);
@@ -1003,6 +1020,11 @@ static void gen_endloop01(DisasContext *ctx)
         TCGv lc1 = get_result_gpr(ctx, HEX_REG_LC1);
         gen_jumpr(ctx, hex_gpr[HEX_REG_SA1]);
         tcg_gen_subi_tl(lc1, hex_gpr[HEX_REG_LC1], 1);
+        if (ctx->need_commit) {
+            gen_helper_trace_store_reg_new(tcg_constant_i32(HEX_REG_LC1), lc1);
+        } else {
+            gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_LC1), lc1);
+        }
     }
     gen_set_label(done);
 }
