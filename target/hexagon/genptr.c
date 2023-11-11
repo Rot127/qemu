@@ -100,14 +100,16 @@ void gen_log_reg_write(DisasContext *ctx, int rnum, TCGv val)
 
     gen_masked_reg_write(val, hex_gpr[rnum], reg_mask);
     tcg_gen_mov_tl(get_result_gpr(ctx, rnum), val);
-    if (ctx->need_commit) {
-        gen_helper_trace_store_reg_new(tcg_constant_i32(rnum), val);
-    } else {
-        gen_helper_trace_store_reg(tcg_constant_i32(rnum), val);
-    }
     if (HEX_DEBUG) {
         /* Do this so HELPER(debug_commit_end) will know */
         tcg_gen_movi_tl(hex_reg_written[rnum], 1);
+    }
+    if (rnum != HEX_REG_PC) {
+        if (ctx->need_commit) {
+            gen_helper_trace_store_reg_new(tcg_constant_i32(rnum), val);
+        } else {
+            gen_helper_trace_store_reg(tcg_constant_i32(rnum), val);
+        }
     }
 }
 

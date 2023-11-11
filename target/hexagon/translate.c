@@ -522,6 +522,11 @@ static void gen_start_packet(DisasContext *ctx)
 
     analyze_packet(ctx);
     for (int i = 0; i < TOTAL_PER_THREAD_REGS; ++i) {
+        if (i == HEX_REG_PC) {
+            gen_helper_trace_load_reg(tcg_constant_i32(i), tcg_constant_tl(next_PC - pkt->encod_pkt_size_in_bytes));
+            gen_helper_trace_load_reg_new(tcg_constant_i32(i), tcg_constant_tl(next_PC - pkt->encod_pkt_size_in_bytes));
+            continue;
+        }
         gen_helper_trace_load_reg(tcg_constant_i32(i), hex_gpr[i]);
         gen_helper_trace_load_reg_new(tcg_constant_i32(i), hex_gpr[i]);
     }
@@ -682,7 +687,10 @@ static void gen_reg_writes(DisasContext *ctx)
         int reg_num = ctx->reg_log[i];
 
         tcg_gen_mov_tl(hex_gpr[reg_num], get_result_gpr(ctx, reg_num));
-        gen_helper_trace_store_reg(tcg_constant_i32(reg_num), hex_gpr[reg_num]);
+        if (reg_num != HEX_REG_PC) {
+            // PC writes are not tracked.
+            gen_helper_trace_store_reg(tcg_constant_i32(reg_num), hex_gpr[reg_num]);
+        }
 
         /*
          * ctx->is_tight_loop is set when SA0 points to the beginning of the TB.
