@@ -285,9 +285,9 @@ static inline void gen_write_ctrl_reg_pair(DisasContext *ctx, int reg_num,
         tcg_gen_mov_tl(result, val32);
         // p3_0 already written in gen_write_p3_0
         if (ctx->need_commit) {
-            gen_helper_trace_store_reg_new(tcg_constant_i32(reg_num), val32);
+            gen_helper_trace_store_reg_new(tcg_constant_i32(reg_num + 1), val32);
         } else {
-            gen_helper_trace_store_reg(tcg_constant_i32(reg_num), val32);
+            gen_helper_trace_store_reg(tcg_constant_i32(reg_num + 1), val32);
         }
     } else {
         gen_log_reg_write_pair(ctx, reg_num, val);
