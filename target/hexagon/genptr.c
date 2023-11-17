@@ -914,7 +914,7 @@ static void gen_endloop0(DisasContext *ctx)
 
     TCGLabel *label_lc0_decr = gen_new_label();
     tcg_gen_brcondi_tl(TCG_COND_LEU, hex_gpr[HEX_REG_LC0], 1, label_lc0_decr);
-    TCGv lc0_tmp = get_result_gpr(ctx, HEX_REG_LC0);
+    TCGv lc0_tmp = tcg_temp_new();
     tcg_gen_subi_tl(lc0_tmp, hex_gpr[HEX_REG_LC0], 1);
     gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_LC0), lc0_tmp);
     gen_set_label(label_lc0_decr);
