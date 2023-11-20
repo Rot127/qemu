@@ -105,7 +105,7 @@ void gen_log_reg_write(DisasContext *ctx, int rnum, TCGv val)
         tcg_gen_movi_tl(hex_reg_written[rnum], 1);
     }
     if (rnum != HEX_REG_PC) {
-        if (ctx->need_commit) {
+        if (ctx->need_commit && rnum != HEX_REG_LC0) {
             gen_helper_trace_store_reg_new(tcg_constant_i32(rnum), val);
         } else {
             gen_helper_trace_store_reg(tcg_constant_i32(rnum), val);
@@ -955,11 +955,7 @@ static void gen_endloop1(DisasContext *ctx)
         TCGv lc1 = get_result_gpr(ctx, HEX_REG_LC1);
         gen_jumpr(ctx, hex_gpr[HEX_REG_SA1]);
         tcg_gen_subi_tl(lc1, hex_gpr[HEX_REG_LC1], 1);
-        if (ctx->need_commit) {
-            gen_helper_trace_store_reg_new(tcg_constant_i32(HEX_REG_LC1), lc1);
-        } else {
-            gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_LC1), lc1);
-        }
+        gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_LC1), lc1);
     }
     gen_set_label(label);
 }
@@ -1011,11 +1007,7 @@ static void gen_endloop01(DisasContext *ctx)
         TCGv lc0 = get_result_gpr(ctx, HEX_REG_LC0);
         gen_jumpr(ctx, hex_gpr[HEX_REG_SA0]);
         tcg_gen_subi_tl(lc0, hex_gpr[HEX_REG_LC0], 1);
-        if (ctx->need_commit) {
-            gen_helper_trace_store_reg_new(tcg_constant_i32(HEX_REG_LC0), lc0);
-        } else {
-            gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_LC0), lc0);
-        }
+        gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_LC0), lc0);
         tcg_gen_br(done);
     }
     gen_set_label(label3);
@@ -1024,11 +1016,7 @@ static void gen_endloop01(DisasContext *ctx)
         TCGv lc1 = get_result_gpr(ctx, HEX_REG_LC1);
         gen_jumpr(ctx, hex_gpr[HEX_REG_SA1]);
         tcg_gen_subi_tl(lc1, hex_gpr[HEX_REG_LC1], 1);
-        if (ctx->need_commit) {
-            gen_helper_trace_store_reg_new(tcg_constant_i32(HEX_REG_LC1), lc1);
-        } else {
-            gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_LC1), lc1);
-        }
+        gen_helper_trace_store_reg(tcg_constant_i32(HEX_REG_LC1), lc1);
     }
     gen_set_label(done);
 }

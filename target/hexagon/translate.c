@@ -687,8 +687,11 @@ static void gen_reg_writes(DisasContext *ctx)
         int reg_num = ctx->reg_log[i];
 
         tcg_gen_mov_tl(hex_gpr[reg_num], get_result_gpr(ctx, reg_num));
-        if (reg_num != HEX_REG_PC) {
+        if (reg_num != HEX_REG_PC && reg_num != HEX_REG_LC0) {
             // PC writes are not tracked.
+            // LC0 is never tracked, because at this point it doesn't necessarily
+            // hold the correct value.
+            // Due to direct blocck chaining, it might hold the not decremented value.
             gen_helper_trace_store_reg(tcg_constant_i32(reg_num), hex_gpr[reg_num]);
         }
 
