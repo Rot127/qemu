@@ -37,5 +37,5 @@ jobs:
     - name: Build for Hexagon
       run: |
         cd qemu
-        ./configure --prefix=$HOME --with-tracewrap="$HOME"/bap-frames --target-list=hexagon-linux-user
+        opam exec -- ./configure --prefix=$HOME --with-tracewrap="$HOME"/bap-frames --target-list=hexagon-linux-user
         ninja -C build
