@@ -40,7 +40,6 @@ jobs:
       with:
         repository: BinaryAnalysisPlatform/qemu
         path: qemu
-        ref: tracewrap-8.1-hexagon
     - name: Build for Hexagon
       run: |
         cd qemu
