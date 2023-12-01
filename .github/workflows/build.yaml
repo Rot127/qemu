@@ -19,7 +19,7 @@ jobs:
       run: |
         sudo apt-get  update
         sudo apt-get --no-install-recommends -y build-dep qemu
-        sudo apt-get install -y autoconf libtool protobuf-c-compiler
+        sudo apt-get install -y autoconf libtool protobuf-c-compiler libprotobuf-c-dev
         pip3 install --user ninja
     - name: Install OCaml
       uses: ocaml/setup-ocaml@v2
